@@ -1,0 +1,125 @@
+// GestQuadra - Sistema de gestão para quadras de society (multi-tenant)
+// Cada quadra (cliente do SaaS) tem seus próprios dados, isolados por quadraId.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────────
+
+enum Role {
+  SUPERADMIN // Dono da plataforma GestQuadra — cadastra novas quadras (sem quadraId)
+  ADMIN // Dono/gestor da quadra — único perfil operacional nesta fase
+}
+
+enum ProductCategory {
+  BEBIDA
+  COMIDA
+}
+
+enum RachaStatus {
+  ABERTO // ainda em edição/uso na calculadora
+  FECHADO // valor final calculado e considerado faturamento
+}
+
+// ─────────────────────────────────────────────────────────────
+// TENANT
+// ─────────────────────────────────────────────────────────────
+
+model Quadra {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  ownerName String?
+  phone     String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users    User[]
+  products Product[]
+  rachas   Racha[]
+
+  @@map("quadras")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(ADMIN)
+  active       Boolean  @default(true)
+  quadraId     String?
+  quadra       Quadra?  @relation(fields: [quadraId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([quadraId])
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────────────────────
+// CATÁLOGO DE PRODUTOS (bebidas/comidas) — específico de cada quadra
+// ─────────────────────────────────────────────────────────────
+
+model Product {
+  id        String          @id @default(uuid())
+  quadraId  String
+  quadra    Quadra          @relation(fields: [quadraId], references: [id], onDelete: Cascade)
+  name      String
+  category  ProductCategory
+  price     Decimal         @db.Decimal(10, 2)
+  photoUrl  String?
+  active    Boolean         @default(true)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  rachaItems RachaItem[]
+
+  @@index([quadraId])
+  @@map("products")
+}
+
+// ─────────────────────────────────────────────────────────────
+// RACHA = uma locação/jogo, com a divisão de valor entre os jogadores
+// ─────────────────────────────────────────────────────────────
+
+model Racha {
+  id             String      @id @default(uuid())
+  quadraId       String
+  quadra         Quadra      @relation(fields: [quadraId], references: [id], onDelete: Cascade)
+  date           DateTime    @default(now())
+  courtPrice     Decimal     @db.Decimal(10, 2)
+  numberOfPlayers Int
+  status         RachaStatus @default(ABERTO)
+  notes          String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  items RachaItem[]
+
+  @@index([quadraId, date])
+  @@map("rachas")
+}
+
+model RachaItem {
+  id        String   @id @default(uuid())
+  rachaId   String
+  racha     Racha    @relation(fields: [rachaId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Decimal  @db.Decimal(10, 2) // snapshot do preço no momento do consumo
+  createdAt DateTime @default(now())
+
+  @@index([rachaId])
+  @@map("racha_items")
+}
