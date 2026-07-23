@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Quadra {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users    User[]
+  products Product[]
+  rachas   Racha[]
+
+  @@map("quadras")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  quadraId  String   @map("quadra_id")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  quadra Quadra @relation(fields: [quadraId], references: [id], onDelete: Cascade)
+
+  @@map("users")
+}
+
+model Product {
+  id        String   @id @default(uuid())
+  name      String
+  price     Decimal  @db.Decimal(10, 2)
+  photoUrl  String?  @map("photo_url")
+  quadraId  String   @map("quadra_id")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  quadra Quadra      @relation(fields: [quadraId], references: [id], onDelete: Cascade)
+  items  RachaItem[]
+
+  @@map("products")
+}
+
+enum RachaStatus {
+  ABERTA
+  FECHADA
+}
+
+model Racha {
+  id            String      @id @default(uuid())
+  courtValue    Decimal     @map("court_value") @db.Decimal(10, 2)
+  playersCount  Int         @map("players_count")
+  totalValue    Decimal     @map("total_value") @db.Decimal(10, 2)
+  valuePerHead  Decimal     @map("value_per_head") @db.Decimal(10, 2)
+  status        RachaStatus @default(FECHADA)
+  playedAt      DateTime    @default(now()) @map("played_at")
+  quadraId      String      @map("quadra_id")
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  quadra Quadra      @relation(fields: [quadraId], references: [id], onDelete: Cascade)
+  items  RachaItem[]
+
+  @@map("rachas")
+}
+
+model RachaItem {
+  id         String   @id @default(uuid())
+  rachaId    String   @map("racha_id")
+  productId  String?  @map("product_id")
+  name       String
+  unitPrice  Decimal  @map("unit_price") @db.Decimal(10, 2)
+  quantity   Int
+  createdAt  DateTime @default(now())
+
+  racha   Racha    @relation(fields: [rachaId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@map("racha_items")
+}
