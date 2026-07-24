@@ -87,7 +87,7 @@ export default function NovaRacha() {
         await api.patch(`/rachas/${res.data.id}/status`, { status: 'FECHADO' });
       }
 
-      navigate('/historico');
+      navigate(`/rachas/${res.data.id}`);
     } finally {
       setSaving(false);
     }

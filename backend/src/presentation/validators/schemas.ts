@@ -37,3 +37,18 @@ export const updateQuadraSettingsSchema = z.object({
   extraBlockMinutes: z.coerce.number().int().positive('Duração do bloco extra deve ser maior que zero'),
   extraBlockPrice: z.coerce.number().nonnegative('Valor do bloco extra não pode ser negativo'),
 });
+
+export const comandaItemSchema = z.object({
+  productId: z.string().uuid(),
+  quantity: z.coerce.number().int().positive(),
+});
+
+export const createComandaSchema = z.object({
+  playerName: z.string().min(1, 'Nome do jogador é obrigatório'),
+  items: z.array(comandaItemSchema).default([]),
+});
+
+export const updateComandaSchema = z.object({
+  playerName: z.string().min(1, 'Nome do jogador é obrigatório').optional(),
+  items: z.array(comandaItemSchema).optional(),
+});

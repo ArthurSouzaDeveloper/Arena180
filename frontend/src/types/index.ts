@@ -36,12 +36,32 @@ export interface RachaItemView {
   subtotal: number;
 }
 
+export interface ComandaItemView {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+}
+
+export interface ComandaView {
+  id: string;
+  playerName: string;
+  items: ComandaItemView[];
+  total: number;
+  totalToPay: number;
+}
+
 export interface RachaSummary {
   courtPrice: number;
   consumptionTotal: number;
-  total: number;
+  sharedTotal: number;
   perPlayer: number;
+  comandasTotal: number;
+  total: number;
   items: RachaItemView[];
+  comandas: ComandaView[];
 }
 
 export interface Racha {

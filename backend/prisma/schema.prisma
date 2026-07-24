@@ -88,7 +88,8 @@ model Product {
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 
-  rachaItems RachaItem[]
+  rachaItems   RachaItem[]
+  comandaItems ComandaItem[]
 
   @@index([quadraId])
   @@map("products")
@@ -110,7 +111,8 @@ model Racha {
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
-  items RachaItem[]
+  items    RachaItem[]
+  comandas Comanda[]
 
   @@index([quadraId, date])
   @@map("rachas")
@@ -128,4 +130,37 @@ model RachaItem {
 
   @@index([rachaId])
   @@map("racha_items")
+}
+
+// ─────────────────────────────────────────────────────────────
+// COMANDA = conta individual de um jogador dentro de uma racha, para
+// cobrar separadamente o consumo dele em vez de ratear com o grupo.
+// ─────────────────────────────────────────────────────────────
+
+model Comanda {
+  id         String   @id @default(uuid())
+  rachaId    String
+  racha      Racha    @relation(fields: [rachaId], references: [id], onDelete: Cascade)
+  playerName String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  items ComandaItem[]
+
+  @@index([rachaId])
+  @@map("comandas")
+}
+
+model ComandaItem {
+  id        String   @id @default(uuid())
+  comandaId String
+  comanda   Comanda  @relation(fields: [comandaId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Decimal  @db.Decimal(10, 2) // snapshot do preço no momento do consumo
+  createdAt DateTime @default(now())
+
+  @@index([comandaId])
+  @@map("comanda_items")
 }

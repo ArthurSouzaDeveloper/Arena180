@@ -1,12 +1,11 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Package, Calculator, History, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, Calculator, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const navItems = [
   { to: '/', label: 'Painel', icon: LayoutDashboard, end: true },
   { to: '/produtos', label: 'Produtos', icon: Package },
-  { to: '/nova-racha', label: 'Nova racha', icon: Calculator },
-  { to: '/historico', label: 'Histórico', icon: History },
+  { to: '/rachas', label: 'Rachas', icon: Calculator },
   { to: '/configuracoes', label: 'Configurações', icon: Settings },
 ];
 
