@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Package, Calculator, History, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, Calculator, History, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const navItems = [
@@ -7,6 +7,7 @@ const navItems = [
   { to: '/produtos', label: 'Produtos', icon: Package },
   { to: '/nova-racha', label: 'Nova racha', icon: Calculator },
   { to: '/historico', label: 'Histórico', icon: History },
+  { to: '/configuracoes', label: 'Configurações', icon: Settings },
 ];
 
 export default function Layout() {

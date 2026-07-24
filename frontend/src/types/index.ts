@@ -6,6 +6,9 @@ export interface Quadra {
   id: string;
   slug: string;
   name: string;
+  hourlyRate: string;
+  extraBlockMinutes: number;
+  extraBlockPrice: string;
 }
 
 export interface User {

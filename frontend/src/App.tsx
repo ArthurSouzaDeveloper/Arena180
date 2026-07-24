@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Produtos from './pages/Produtos';
 import NovaRacha from './pages/NovaRacha';
 import Historico from './pages/Historico';
+import Configuracoes from './pages/Configuracoes';
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
             <Route path="/produtos" element={<Produtos />} />
             <Route path="/nova-racha" element={<NovaRacha />} />
             <Route path="/historico" element={<Historico />} />
+            <Route path="/configuracoes" element={<Configuracoes />} />
           </Route>
         </Routes>
       </AuthProvider>

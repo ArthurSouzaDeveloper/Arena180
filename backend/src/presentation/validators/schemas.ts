@@ -31,3 +31,9 @@ export const createRachaSchema = z.object({
 export const closeRachaSchema = z.object({
   status: z.enum(['ABERTO', 'FECHADO']),
 });
+
+export const updateQuadraSettingsSchema = z.object({
+  hourlyRate: z.coerce.number().positive('Valor da primeira hora deve ser maior que zero'),
+  extraBlockMinutes: z.coerce.number().int().positive('Duração do bloco extra deve ser maior que zero'),
+  extraBlockPrice: z.coerce.number().nonnegative('Valor do bloco extra não pode ser negativo'),
+});

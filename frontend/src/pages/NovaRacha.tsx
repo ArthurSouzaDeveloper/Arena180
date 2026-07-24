@@ -3,14 +3,36 @@ import { useNavigate } from 'react-router-dom';
 import { Minus, Plus } from 'lucide-react';
 import { api, fileUrl } from '../lib/api';
 import { Product } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 function formatBRL(value: number): string {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+/**
+ * Cobra hourlyRate pela primeira hora e, a partir daí, um extraBlockPrice a
+ * cada extraBlockMinutes de uso adicional (bloco parcial conta como cheio).
+ */
+function calculateCourtPrice(
+  totalMinutes: number,
+  hourlyRate: number,
+  extraBlockMinutes: number,
+  extraBlockPrice: number,
+): number {
+  if (totalMinutes <= 0) return 0;
+  const extraMinutes = Math.max(0, totalMinutes - 60);
+  const extraBlocks = extraBlockMinutes > 0 ? Math.ceil(extraMinutes / extraBlockMinutes) : 0;
+  return hourlyRate + extraBlocks * extraBlockPrice;
+}
+
 export default function NovaRacha() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const quadra = user?.quadra;
   const [products, setProducts] = useState<Product[]>([]);
+  const [autoCalc, setAutoCalc] = useState(true);
+  const [hours, setHours] = useState('1');
+  const [minutes, setMinutes] = useState('0');
   const [courtPrice, setCourtPrice] = useState('');
   const [numberOfPlayers, setNumberOfPlayers] = useState('10');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
@@ -19,6 +41,19 @@ export default function NovaRacha() {
   useEffect(() => {
     api.get<Product[]>('/products').then((res) => setProducts(res.data));
   }, []);
+
+  const totalMinutes = (Number(hours) || 0) * 60 + (Number(minutes) || 0);
+  const hourlyRate = Number(quadra?.hourlyRate ?? 0);
+  const extraBlockMinutes = quadra?.extraBlockMinutes ?? 20;
+  const extraBlockPrice = Number(quadra?.extraBlockPrice ?? 0);
+  const calculatedCourtPrice = calculateCourtPrice(totalMinutes, hourlyRate, extraBlockMinutes, extraBlockPrice);
+
+  useEffect(() => {
+    if (autoCalc && quadra) {
+      setCourtPrice(calculatedCourtPrice ? String(calculatedCourtPrice) : '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoCalc, totalMinutes, hourlyRate, extraBlockMinutes, extraBlockPrice, quadra]);
 
   function setQty(productId: string, qty: number) {
     setQuantities((prev) => ({ ...prev, [productId]: Math.max(0, qty) }));
@@ -68,7 +103,58 @@ export default function NovaRacha() {
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
           <div className="rounded-lg border border-gray-200 bg-white p-5">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-gray-700">Valor da quadra</p>
+              <label className="flex items-center gap-2 text-sm text-gray-600">
+                <input
+                  type="checkbox"
+                  checked={autoCalc}
+                  onChange={(e) => setAutoCalc(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                Calcular pelo tempo jogado
+              </label>
+            </div>
+
+            {autoCalc && (
+              <div className="mt-3 rounded-md bg-gray-50 p-3">
+                {quadra ? (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Horas</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={hours}
+                          onChange={(e) => setHours(e.target.value)}
+                          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Minutos</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="59"
+                          value={minutes}
+                          onChange={(e) => setMinutes(e.target.value)}
+                          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                        />
+                      </div>
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Primeira hora {formatBRL(hourlyRate)} + {formatBRL(extraBlockPrice)} a cada {extraBlockMinutes}{' '}
+                      min adicionais. Ajuste os valores padrão em Configurações.
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-500">Carregando configurações da quadra...</p>
+                )}
+              </div>
+            )}
+
+            <div className="mt-4 grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Valor da quadra (R$)</label>
                 <input
@@ -76,7 +162,10 @@ export default function NovaRacha() {
                   step="0.01"
                   min="0"
                   value={courtPrice}
-                  onChange={(e) => setCourtPrice(e.target.value)}
+                  onChange={(e) => {
+                    setAutoCalc(false);
+                    setCourtPrice(e.target.value);
+                  }}
                   className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                   placeholder="200.00"
                 />

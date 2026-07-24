@@ -43,6 +43,12 @@ model Quadra {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Precificação padrão da quadra: hourlyRate cobre a primeira hora; a partir
+  // daí cobra-se extraBlockPrice a cada extraBlockMinutes de uso adicional.
+  hourlyRate        Decimal @default(140) @db.Decimal(10, 2)
+  extraBlockMinutes Int     @default(20)
+  extraBlockPrice   Decimal @default(30) @db.Decimal(10, 2)
+
   users    User[]
   products Product[]
   rachas   Racha[]

@@ -41,7 +41,16 @@ export const authService = {
         name: user.name,
         email: user.email,
         role: user.role,
-        quadra: user.quadra ? { id: user.quadra.id, slug: user.quadra.slug, name: user.quadra.name } : null,
+        quadra: user.quadra
+          ? {
+              id: user.quadra.id,
+              slug: user.quadra.slug,
+              name: user.quadra.name,
+              hourlyRate: user.quadra.hourlyRate,
+              extraBlockMinutes: user.quadra.extraBlockMinutes,
+              extraBlockPrice: user.quadra.extraBlockPrice,
+            }
+          : null,
       },
     };
   },
@@ -55,7 +64,16 @@ export const authService = {
         email: true,
         role: true,
         active: true,
-        quadra: { select: { id: true, slug: true, name: true } },
+        quadra: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            hourlyRate: true,
+            extraBlockMinutes: true,
+            extraBlockPrice: true,
+          },
+        },
       },
     });
     if (!user) throw new UnauthorizedError();
