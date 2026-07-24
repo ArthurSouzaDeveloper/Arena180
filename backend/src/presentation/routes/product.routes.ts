@@ -4,7 +4,7 @@ import { authenticate, requireQuadra } from '../middlewares/auth.middleware';
 import { validateBody } from '../middlewares/validate.middleware';
 import { createProductSchema, updateProductSchema } from '../validators/schemas';
 import { productService } from '../../application/services/product.service';
-import { uploadProductPhoto } from '../middlewares/upload.middleware';
+import { uploadProductPhoto, verifyUploadedImage } from '../middlewares/upload.middleware';
 import { env } from '../../config/env';
 
 const router = Router();
@@ -33,6 +33,7 @@ router.get(
 router.post(
   '/',
   handlePhotoUpload,
+  verifyUploadedImage,
   validateBody(createProductSchema),
   asyncHandler(async (req, res) => {
     const photoUrl = photoUrlFor(req.file?.filename);
@@ -44,6 +45,7 @@ router.post(
 router.put(
   '/:id',
   handlePhotoUpload,
+  verifyUploadedImage,
   validateBody(updateProductSchema),
   asyncHandler(async (req, res) => {
     const photoUrl = photoUrlFor(req.file?.filename);

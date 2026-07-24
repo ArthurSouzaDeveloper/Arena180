@@ -2,12 +2,7 @@ import { prisma } from '../../config/prisma';
 import { comparePassword, signAccessToken } from '../../utils/auth';
 import { UnauthorizedError } from '../../utils/errors';
 import { logger } from '../../config/logger';
-
-function maskEmail(email: string): string {
-  const [user, domain] = email.split('@');
-  if (!domain) return '***';
-  return `${user.slice(0, 2)}***@${domain}`;
-}
+import { maskEmail } from '../../utils/mask';
 
 export const authService = {
   async login(email: string, password: string) {

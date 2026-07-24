@@ -1,13 +1,14 @@
 import { Router } from 'express';
-import { RachaStatus } from '@prisma/client';
+import { z } from 'zod';
 import { asyncHandler } from '../../utils/http';
 import { authenticate, requireQuadra } from '../middlewares/auth.middleware';
-import { validateBody } from '../middlewares/validate.middleware';
+import { validateBody, validateQuery } from '../middlewares/validate.middleware';
 import {
   createRachaSchema,
   closeRachaSchema,
   createComandaSchema,
   updateComandaSchema,
+  listRachasQuerySchema,
 } from '../validators/schemas';
 import { rachaService } from '../../application/services/racha.service';
 
@@ -16,10 +17,9 @@ router.use(authenticate, requireQuadra);
 
 router.get(
   '/',
+  validateQuery(listRachasQuerySchema),
   asyncHandler(async (req, res) => {
-    const from = req.query.from ? new Date(String(req.query.from)) : undefined;
-    const to = req.query.to ? new Date(String(req.query.to)) : undefined;
-    const status = req.query.status ? (String(req.query.status) as RachaStatus) : undefined;
+    const { from, to, status } = res.locals.query as z.infer<typeof listRachasQuerySchema>;
     res.json(await rachaService.list(req.user!.quadraId!, from, to, status));
   }),
 );

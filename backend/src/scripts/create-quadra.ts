@@ -5,6 +5,7 @@
 import { prisma } from '../config/prisma';
 import { hashPassword } from '../utils/auth';
 import { logger } from '../config/logger';
+import { maskEmail } from '../utils/mask';
 
 async function main() {
   const name = process.env.QUADRA_NAME;
@@ -24,7 +25,7 @@ async function main() {
     data: { name: adminName, email: adminEmail, passwordHash, role: 'ADMIN', quadraId: quadra.id },
   });
 
-  logger.info('quadra_created', { quadraId: quadra.id, slug: quadra.slug, adminEmail: admin.email });
+  logger.info('quadra_created', { quadraId: quadra.id, slug: quadra.slug, adminEmail: maskEmail(admin.email) });
   console.log(`Quadra "${quadra.name}" criada. Login do admin: ${admin.email}`);
 }
 

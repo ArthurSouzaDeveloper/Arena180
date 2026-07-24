@@ -52,3 +52,9 @@ export const updateComandaSchema = z.object({
   playerName: z.string().min(1, 'Nome do jogador é obrigatório').optional(),
   items: z.array(comandaItemSchema).optional(),
 });
+
+export const listRachasQuerySchema = z.object({
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+  status: z.enum(['ABERTO', 'FECHADO']).optional(),
+});

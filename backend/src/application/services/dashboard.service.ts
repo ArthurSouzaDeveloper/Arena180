@@ -5,9 +5,17 @@ function toNumber(value: Prisma.Decimal | number): number {
   return typeof value === 'number' ? value : Number(value);
 }
 
-function rachaTotal(racha: { courtPrice: Prisma.Decimal; items: { quantity: number; unitPrice: Prisma.Decimal }[] }): number {
+function rachaTotal(racha: {
+  courtPrice: Prisma.Decimal;
+  items: { quantity: number; unitPrice: Prisma.Decimal }[];
+  comandas: { items: { quantity: number; unitPrice: Prisma.Decimal }[] }[];
+}): number {
   const consumption = racha.items.reduce((sum, item) => sum + item.quantity * toNumber(item.unitPrice), 0);
-  return toNumber(racha.courtPrice) + consumption;
+  const comandasConsumption = racha.comandas.reduce(
+    (sum, comanda) => sum + comanda.items.reduce((s, item) => s + item.quantity * toNumber(item.unitPrice), 0),
+    0,
+  );
+  return toNumber(racha.courtPrice) + consumption + comandasConsumption;
 }
 
 function startOfDay(d: Date): Date {
@@ -24,7 +32,7 @@ export const dashboardService = {
 
     const rachas = await prisma.racha.findMany({
       where: { quadraId, status: RachaStatus.FECHADO, date: { gte: monthStart } },
-      include: { items: true },
+      include: { items: true, comandas: { include: { items: true } } },
     });
 
     let faturamentoHoje = 0;

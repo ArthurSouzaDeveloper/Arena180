@@ -10,3 +10,11 @@ export function validateBody(schema: Schema) {
     next();
   };
 }
+
+/** Validates req.query against a Zod schema, exposing the parsed result via res.locals.query. */
+export function validateQuery(schema: Schema) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    res.locals.query = schema.parse(req.query);
+    next();
+  };
+}
