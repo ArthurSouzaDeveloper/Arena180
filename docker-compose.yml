@@ -3,15 +3,13 @@ services:
     image: postgres:16-alpine
     container_name: gestquadra-db
     environment:
-      POSTGRES_USER: gestquadra
-      POSTGRES_PASSWORD: gestquadra
-      POSTGRES_DB: gestquadra
-    ports:
-      - '5432:5432'
+      POSTGRES_USER: ${POSTGRES_USER:-gestquadra}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      POSTGRES_DB: ${POSTGRES_DB:-gestquadra}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U gestquadra']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-gestquadra}']
       interval: 5s
       timeout: 5s
       retries: 10
@@ -25,11 +23,9 @@ services:
     environment:
       NODE_ENV: production
       PORT: 4000
-      DATABASE_URL: postgresql://gestquadra:gestquadra@db:5432/gestquadra?schema=public
-      JWT_ACCESS_SECRET: change-me-in-prod-access
-      CORS_ORIGIN: http://localhost:8082
-    ports:
-      - '4000:4000'
+      DATABASE_URL: postgresql://${POSTGRES_USER:-gestquadra}:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}@db:5432/${POSTGRES_DB:-gestquadra}?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?defina JWT_ACCESS_SECRET no .env}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8082}
     volumes:
       - uploads:/app/uploads
 
