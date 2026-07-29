@@ -1,6 +1,7 @@
 import { Prisma, RachaStatus } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { NotFoundError, AppError } from '../../utils/errors';
+import { courtService } from './court.service';
 
 interface RachaItemInput {
   productId: string;
@@ -8,9 +9,11 @@ interface RachaItemInput {
 }
 
 interface CreateRachaInput {
+  courtId: string;
   date?: Date;
+  durationMinutes?: number;
   courtPrice: number;
-  numberOfPlayers: number;
+  numberOfPlayers?: number;
   notes?: string;
   items: RachaItemInput[];
 }
@@ -22,12 +25,14 @@ interface ComandaInput {
 
 type RachaWithRelations = Prisma.RachaGetPayload<{
   include: {
+    court: true;
     items: { include: { product: true } };
     comandas: { include: { items: { include: { product: true } } } };
   };
 }>;
 
 const rachaInclude = {
+  court: true,
   items: { include: { product: true } },
   comandas: { include: { items: { include: { product: true } } } },
 } satisfies Prisma.RachaInclude;
@@ -49,7 +54,10 @@ function summarize(racha: RachaWithRelations) {
   const courtPrice = toNumber(racha.courtPrice);
   const consumptionTotal = racha.items.reduce((sum, item) => sum + item.quantity * toNumber(item.unitPrice), 0);
   const sharedTotal = courtPrice + consumptionTotal;
-  const perPlayer = racha.numberOfPlayers > 0 ? round2(sharedTotal / racha.numberOfPlayers) : 0;
+  // Enquanto o dono não informa quantos jogaram (caso do agendamento público),
+  // não há como ratear — o valor por jogador fica zerado até o fechamento.
+  const playersCount = racha.numberOfPlayers ?? 0;
+  const perPlayer = playersCount > 0 ? round2(sharedTotal / playersCount) : 0;
 
   const comandas = racha.comandas.map((comanda) => {
     const comandaTotal = comanda.items.reduce((sum, item) => sum + item.quantity * toNumber(item.unitPrice), 0);
@@ -107,14 +115,19 @@ async function validateProductsBelongToArena(arenaId: string, items: RachaItemIn
 
 export const rachaService = {
   async create(arenaId: string, input: CreateRachaInput) {
+    // A quadra precisa ser da própria arena — impede vincular uma racha à
+    // quadra de outro cliente do SaaS passando um courtId qualquer.
+    await courtService.getOwned(arenaId, input.courtId);
     const priceByProduct = await validateProductsBelongToArena(arenaId, input.items);
 
     const racha = await prisma.racha.create({
       data: {
         arenaId,
+        courtId: input.courtId,
         date: input.date ?? new Date(),
+        durationMinutes: input.durationMinutes ?? 60,
         courtPrice: input.courtPrice,
-        numberOfPlayers: input.numberOfPlayers,
+        numberOfPlayers: input.numberOfPlayers ?? null,
         notes: input.notes,
         items: {
           create: input.items.map((item) => ({
@@ -129,18 +142,39 @@ export const rachaService = {
     return { ...racha, summary: summarize(racha) };
   },
 
+  async update(arenaId: string, rachaId: string, input: { numberOfPlayers?: number; notes?: string }) {
+    await findOwnedRacha(arenaId, rachaId);
+    const racha = await prisma.racha.update({
+      where: { id: rachaId },
+      data: {
+        ...(input.numberOfPlayers !== undefined ? { numberOfPlayers: input.numberOfPlayers } : {}),
+        ...(input.notes !== undefined ? { notes: input.notes } : {}),
+      },
+      include: rachaInclude,
+    });
+    return { ...racha, summary: summarize(racha) };
+  },
+
+  async remove(arenaId: string, rachaId: string) {
+    await findOwnedRacha(arenaId, rachaId);
+    // Itens e comandas caem junto por cascade.
+    await prisma.racha.delete({ where: { id: rachaId } });
+  },
+
   async get(arenaId: string, rachaId: string) {
     const racha = await prisma.racha.findFirst({ where: { id: rachaId, arenaId }, include: rachaInclude });
     if (!racha) throw new NotFoundError('Racha');
     return { ...racha, summary: summarize(racha) };
   },
 
-  async list(arenaId: string, from?: Date, to?: Date, status?: RachaStatus) {
+  async list(arenaId: string, filters: { from?: Date; to?: Date; status?: RachaStatus; courtId?: string } = {}) {
+    const { from, to, status, courtId } = filters;
     const rachas = await prisma.racha.findMany({
       where: {
         arenaId,
         ...(from || to ? { date: { gte: from, lte: to } } : {}),
         ...(status ? { status } : {}),
+        ...(courtId ? { courtId } : {}),
       },
       include: rachaInclude,
       orderBy: { date: 'desc' },

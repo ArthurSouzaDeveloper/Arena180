@@ -11,6 +11,7 @@ import Rachas from './pages/Rachas';
 import RachaDetalhe from './pages/RachaDetalhe';
 import Configuracoes from './pages/Configuracoes';
 import SuperadminArenas from './pages/SuperadminArenas';
+import AgendamentoPublico from './pages/AgendamentoPublico';
 
 export default function App() {
   return (
@@ -18,6 +19,8 @@ export default function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
+          {/* Página pública: sem login, fora do layout autenticado. */}
+          <Route path="/agendar/:slug" element={<AgendamentoPublico />} />
 
           <Route
             element={

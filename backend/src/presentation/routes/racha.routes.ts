@@ -5,6 +5,7 @@ import { authenticate, requireArena } from '../middlewares/auth.middleware';
 import { validateBody, validateQuery } from '../middlewares/validate.middleware';
 import {
   createRachaSchema,
+  updateRachaSchema,
   closeRachaSchema,
   createComandaSchema,
   updateComandaSchema,
@@ -19,8 +20,8 @@ router.get(
   '/',
   validateQuery(listRachasQuerySchema),
   asyncHandler(async (req, res) => {
-    const { from, to, status } = res.locals.query as z.infer<typeof listRachasQuerySchema>;
-    res.json(await rachaService.list(req.user!.arenaId!, from, to, status));
+    const filters = res.locals.query as z.infer<typeof listRachasQuerySchema>;
+    res.json(await rachaService.list(req.user!.arenaId!, filters));
   }),
 );
 
@@ -37,6 +38,22 @@ router.get(
   '/:id',
   asyncHandler(async (req, res) => {
     res.json(await rachaService.get(req.user!.arenaId!, req.params.id));
+  }),
+);
+
+router.patch(
+  '/:id',
+  validateBody(updateRachaSchema),
+  asyncHandler(async (req, res) => {
+    res.json(await rachaService.update(req.user!.arenaId!, req.params.id, req.body));
+  }),
+);
+
+router.delete(
+  '/:id',
+  asyncHandler(async (req, res) => {
+    await rachaService.remove(req.user!.arenaId!, req.params.id);
+    res.status(204).end();
   }),
 );
 

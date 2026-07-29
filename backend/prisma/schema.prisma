@@ -29,6 +29,11 @@ enum RachaStatus {
   FECHADO // valor final calculado e considerado faturamento
 }
 
+enum RachaSource {
+  MANUAL // criada pelo dono na calculadora
+  PUBLIC_BOOKING // criada por um jogador pelo link público de agendamento
+}
+
 // ─────────────────────────────────────────────────────────────
 // TENANT
 // ─────────────────────────────────────────────────────────────
@@ -43,17 +48,40 @@ model Arena {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Precificação padrão da arena: hourlyRate cobre a primeira hora; a partir
-  // daí cobra-se extraBlockPrice a cada extraBlockMinutes de uso adicional.
-  hourlyRate        Decimal @default(140) @db.Decimal(10, 2)
-  extraBlockMinutes Int     @default(20)
-  extraBlockPrice   Decimal @default(30) @db.Decimal(10, 2)
+  // Janela de funcionamento usada pelo agendamento público (mesma todos os dias).
+  bookingOpenTime  String @default("08:00")
+  bookingCloseTime String @default("23:00")
 
   users    User[]
   products Product[]
   rachas   Racha[]
+  courts   Court[]
 
   @@map("arenas")
+}
+
+// ─────────────────────────────────────────────────────────────
+// COURT = quadra física dentro de uma arena (Quadra 1, 2, 3...).
+// Cada uma tem sua própria precificação: hourlyRate cobre a primeira hora;
+// a partir daí cobra-se extraBlockPrice a cada extraBlockMinutes adicionais.
+// ─────────────────────────────────────────────────────────────
+
+model Court {
+  id                String   @id @default(uuid())
+  arenaId           String
+  arena             Arena    @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  name              String
+  hourlyRate        Decimal  @default(140) @db.Decimal(10, 2)
+  extraBlockMinutes Int      @default(20)
+  extraBlockPrice   Decimal  @default(30) @db.Decimal(10, 2)
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  rachas Racha[]
+
+  @@index([arenaId])
+  @@map("courts")
 }
 
 model User {
@@ -100,21 +128,32 @@ model Product {
 // ─────────────────────────────────────────────────────────────
 
 model Racha {
-  id              String      @id @default(uuid())
-  arenaId         String
-  arena           Arena       @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  id      String @id @default(uuid())
+  arenaId String
+  arena   Arena  @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  courtId String
+  court   Court  @relation(fields: [courtId], references: [id])
+
   date            DateTime    @default(now())
+  durationMinutes Int         @default(60)
   courtPrice      Decimal     @db.Decimal(10, 2)
-  numberOfPlayers Int
+  numberOfPlayers Int? // fica em branco até o dono fechar a conta
   status          RachaStatus @default(ABERTO)
+  source          RachaSource @default(MANUAL)
   notes           String?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+
+  // Preenchidos quando a racha nasce do link público de agendamento.
+  bookedByName  String?
+  bookedByPhone String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   items    RachaItem[]
   comandas Comanda[]
 
   @@index([arenaId, date])
+  @@index([courtId, date])
   @@map("rachas")
 }
 

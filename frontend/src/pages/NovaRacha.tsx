@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Minus, Plus } from 'lucide-react';
 import { api, fileUrl } from '../lib/api';
-import { Product } from '../types';
-import { useAuth } from '../contexts/AuthContext';
+import { Court, Product } from '../types';
 
 function formatBRL(value: number): string {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -13,22 +12,17 @@ function formatBRL(value: number): string {
  * Cobra hourlyRate pela primeira hora e, a partir daí, um extraBlockPrice a
  * cada extraBlockMinutes de uso adicional (bloco parcial conta como cheio).
  */
-function calculateCourtPrice(
-  totalMinutes: number,
-  hourlyRate: number,
-  extraBlockMinutes: number,
-  extraBlockPrice: number,
-): number {
-  if (totalMinutes <= 0) return 0;
+function calculateCourtPrice(totalMinutes: number, court: Court | undefined): number {
+  if (!court || totalMinutes <= 0) return 0;
   const extraMinutes = Math.max(0, totalMinutes - 60);
-  const extraBlocks = extraBlockMinutes > 0 ? Math.ceil(extraMinutes / extraBlockMinutes) : 0;
-  return hourlyRate + extraBlocks * extraBlockPrice;
+  const extraBlocks = court.extraBlockMinutes > 0 ? Math.ceil(extraMinutes / court.extraBlockMinutes) : 0;
+  return Number(court.hourlyRate) + extraBlocks * Number(court.extraBlockPrice);
 }
 
 export default function NovaRacha() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const arena = user?.arena;
+  const [courts, setCourts] = useState<Court[]>([]);
+  const [courtId, setCourtId] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
   const [autoCalc, setAutoCalc] = useState(true);
   const [hours, setHours] = useState('1');
@@ -40,28 +34,29 @@ export default function NovaRacha() {
 
   useEffect(() => {
     api.get<Product[]>('/products').then((res) => setProducts(res.data));
+    api.get<Court[]>('/courts').then((res) => {
+      setCourts(res.data);
+      if (res.data.length > 0) setCourtId((current) => current || res.data[0].id);
+    });
   }, []);
 
+  const selectedCourt = courts.find((court) => court.id === courtId);
   const totalMinutes = (Number(hours) || 0) * 60 + (Number(minutes) || 0);
-  const hourlyRate = Number(arena?.hourlyRate ?? 0);
-  const extraBlockMinutes = arena?.extraBlockMinutes ?? 20;
-  const extraBlockPrice = Number(arena?.extraBlockPrice ?? 0);
-  const calculatedCourtPrice = calculateCourtPrice(totalMinutes, hourlyRate, extraBlockMinutes, extraBlockPrice);
+  const calculatedCourtPrice = calculateCourtPrice(totalMinutes, selectedCourt);
 
   useEffect(() => {
-    if (autoCalc && arena) {
+    if (autoCalc && selectedCourt) {
       setCourtPrice(calculatedCourtPrice ? String(calculatedCourtPrice) : '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoCalc, totalMinutes, hourlyRate, extraBlockMinutes, extraBlockPrice, arena]);
+  }, [autoCalc, totalMinutes, selectedCourt]);
 
   function setQty(productId: string, qty: number) {
     setQuantities((prev) => ({ ...prev, [productId]: Math.max(0, qty) }));
   }
 
   const consumptionTotal = useMemo(
-    () =>
-      products.reduce((sum, product) => sum + (quantities[product.id] ?? 0) * Number(product.price), 0),
+    () => products.reduce((sum, product) => sum + (quantities[product.id] ?? 0) * Number(product.price), 0),
     [products, quantities],
   );
 
@@ -78,7 +73,9 @@ export default function NovaRacha() {
         .map(([productId, quantity]) => ({ productId, quantity }));
 
       const res = await api.post('/rachas', {
+        courtId,
         courtPrice: courtValue,
+        durationMinutes: totalMinutes || 60,
         numberOfPlayers: players,
         items,
       });
@@ -103,8 +100,21 @@ export default function NovaRacha() {
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
           <div className="rounded-lg border border-gray-200 bg-white p-5">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-700">Valor da quadra</p>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-[200px] flex-1">
+                <label className="block text-sm font-medium text-gray-700">Quadra</label>
+                <select
+                  value={courtId}
+                  onChange={(e) => setCourtId(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                >
+                  {courts.map((court) => (
+                    <option key={court.id} value={court.id}>
+                      {court.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <label className="flex items-center gap-2 text-sm text-gray-600">
                 <input
                   type="checkbox"
@@ -116,41 +126,42 @@ export default function NovaRacha() {
               </label>
             </div>
 
-            {autoCalc && (
+            {courts.length === 0 && (
+              <p className="mt-3 text-sm text-amber-700">
+                Cadastre ao menos uma quadra em Configurações para registrar uma racha.
+              </p>
+            )}
+
+            {autoCalc && selectedCourt && (
               <div className="mt-3 rounded-md bg-gray-50 p-3">
-                {arena ? (
-                  <>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Horas</label>
-                        <input
-                          type="number"
-                          min="0"
-                          value={hours}
-                          onChange={(e) => setHours(e.target.value)}
-                          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Minutos</label>
-                        <input
-                          type="number"
-                          min="0"
-                          max="59"
-                          value={minutes}
-                          onChange={(e) => setMinutes(e.target.value)}
-                          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                        />
-                      </div>
-                    </div>
-                    <p className="mt-2 text-xs text-gray-500">
-                      Primeira hora {formatBRL(hourlyRate)} + {formatBRL(extraBlockPrice)} a cada {extraBlockMinutes}{' '}
-                      min adicionais. Ajuste os valores padrão em Configurações.
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-sm text-gray-500">Carregando configurações da arena...</p>
-                )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Horas</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={hours}
+                      onChange={(e) => setHours(e.target.value)}
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Minutos</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="59"
+                      value={minutes}
+                      onChange={(e) => setMinutes(e.target.value)}
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  {selectedCourt.name}: primeira hora {formatBRL(Number(selectedCourt.hourlyRate))} +{' '}
+                  {formatBRL(Number(selectedCourt.extraBlockPrice))} a cada {selectedCourt.extraBlockMinutes} min
+                  adicionais. Ajuste os valores em Configurações.
+                </p>
               </div>
             )}
 
@@ -250,14 +261,14 @@ export default function NovaRacha() {
           <div className="mt-4 space-y-2">
             <button
               onClick={() => handleSave('FECHADO')}
-              disabled={saving || !courtValue || !players}
+              disabled={saving || !courtValue || !players || !courtId}
               className="w-full rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
             >
               Fechar racha (conta no faturamento)
             </button>
             <button
               onClick={() => handleSave('ABERTO')}
-              disabled={saving || !courtValue || !players}
+              disabled={saving || !courtValue || !players || !courtId}
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
             >
               Salvar como rascunho

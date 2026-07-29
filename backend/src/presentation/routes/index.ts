@@ -4,7 +4,9 @@ import productRoutes from './product.routes';
 import rachaRoutes from './racha.routes';
 import dashboardRoutes from './dashboard.routes';
 import arenaRoutes from './arena.routes';
+import courtRoutes from './court.routes';
 import superadminRoutes from './superadmin.routes';
+import publicRoutes from './public.routes';
 
 const api = Router();
 
@@ -15,6 +17,8 @@ api.use('/products', productRoutes);
 api.use('/rachas', rachaRoutes);
 api.use('/dashboard', dashboardRoutes);
 api.use('/arena', arenaRoutes);
+api.use('/courts', courtRoutes);
 api.use('/superadmin', superadminRoutes);
+api.use('/public', publicRoutes);
 
 export default api;

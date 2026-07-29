@@ -107,6 +107,9 @@ export default function RachaDetalhe() {
   const [products, setProducts] = useState<Product[]>([]);
   const [formMode, setFormMode] = useState<'new' | string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [editingPlayers, setEditingPlayers] = useState(false);
+  const [playersDraft, setPlayersDraft] = useState('');
+  const [savingPlayers, setSavingPlayers] = useState(false);
 
   const load = useMemo(
     () => () => {
@@ -166,6 +169,25 @@ export default function RachaDetalhe() {
     load();
   }
 
+  async function handleSavePlayers() {
+    const value = Number(playersDraft);
+    if (!value || value < 1) return;
+    setSavingPlayers(true);
+    try {
+      await api.patch(`/rachas/${id}`, { numberOfPlayers: value });
+      setEditingPlayers(false);
+      load();
+    } finally {
+      setSavingPlayers(false);
+    }
+  }
+
+  async function handleDeleteRacha() {
+    if (!window.confirm('Excluir esta racha? Essa ação não pode ser desfeita.')) return;
+    await api.delete(`/rachas/${id}`);
+    navigate('/rachas');
+  }
+
   function comandaInitialQuantities(comanda: ComandaView) {
     return Object.fromEntries(comanda.items.map((item) => [item.productId, item.quantity]));
   }
@@ -177,16 +199,26 @@ export default function RachaDetalhe() {
           <button onClick={() => navigate('/rachas')} className="text-sm text-gray-500 hover:underline">
             ← Voltar para Rachas
           </button>
-          <h1 className="mt-1 text-2xl font-semibold text-gray-900">Racha de {formatDateTime(racha.date)}</h1>
-          <span
-            className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-              isAberto ? 'bg-gray-100 text-gray-600' : 'bg-brand-50 text-brand-700'
-            }`}
-          >
-            {isAberto ? 'Aberta' : 'Concluída'}
-          </span>
+          <h1 className="mt-1 text-2xl font-semibold text-gray-900">
+            {racha.court?.name ?? 'Racha'} — {formatDateTime(racha.date)}
+          </h1>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <span
+              className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                isAberto ? 'bg-gray-100 text-gray-600' : 'bg-brand-50 text-brand-700'
+              }`}
+            >
+              {isAberto ? 'Aberta' : 'Concluída'}
+            </span>
+            {racha.source === 'PUBLIC_BOOKING' && (
+              <span className="inline-block rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+                Agendamento online
+              </span>
+            )}
+            <span className="text-xs text-gray-500">{racha.durationMinutes} min reservados</span>
+          </div>
         </div>
-        <div>
+        <div className="flex items-center gap-2">
           {isAberto ? (
             <button
               onClick={handleFinalize}
@@ -204,8 +236,24 @@ export default function RachaDetalhe() {
               Reabrir racha
             </button>
           )}
+          <button
+            onClick={handleDeleteRacha}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600"
+          >
+            Excluir
+          </button>
         </div>
       </div>
+
+      {racha.source === 'PUBLIC_BOOKING' && (
+        <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
+          <p className="text-sm font-medium text-gray-700">Reserva feita pelo link de agendamento</p>
+          <p className="mt-1 text-sm text-gray-600">
+            {racha.bookedByName}
+            {racha.bookedByPhone && <span className="text-gray-500"> · {racha.bookedByPhone}</span>}
+          </p>
+        </div>
+      )}
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
@@ -307,9 +355,64 @@ export default function RachaDetalhe() {
               <dt className="text-gray-500">Consumo compartilhado</dt>
               <dd className="text-gray-900">{formatBRL(racha.summary.consumptionTotal)}</dd>
             </div>
-            <div className="flex justify-between border-t border-gray-200 pt-2">
-              <dt className="text-gray-500">Rateado ({racha.numberOfPlayers} jogadores)</dt>
-              <dd className="text-gray-900">{formatBRL(racha.summary.perPlayer)}/pessoa</dd>
+            <div className="border-t border-gray-200 pt-2">
+              {editingPlayers ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="1"
+                    autoFocus
+                    value={playersDraft}
+                    onChange={(e) => setPlayersDraft(e.target.value)}
+                    placeholder="Jogadores"
+                    className="w-24 rounded-md border border-gray-300 px-2 py-1 text-sm"
+                  />
+                  <button
+                    onClick={handleSavePlayers}
+                    disabled={savingPlayers}
+                    className="rounded-md bg-brand-600 px-2 py-1 text-xs font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+                  >
+                    Salvar
+                  </button>
+                  <button
+                    onClick={() => setEditingPlayers(false)}
+                    className="text-xs text-gray-500 hover:underline"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              ) : racha.numberOfPlayers ? (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">
+                    Rateado ({racha.numberOfPlayers} jogadores){' '}
+                    <button
+                      onClick={() => {
+                        setPlayersDraft(String(racha.numberOfPlayers ?? ''));
+                        setEditingPlayers(true);
+                      }}
+                      className="text-xs text-brand-600 hover:underline"
+                    >
+                      alterar
+                    </button>
+                  </dt>
+                  <dd className="text-gray-900">{formatBRL(racha.summary.perPlayer)}/pessoa</dd>
+                </div>
+              ) : (
+                <div className="rounded-md bg-amber-50 p-2">
+                  <p className="text-xs text-amber-800">
+                    Informe quantos jogaram para calcular o valor por pessoa.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setPlayersDraft('');
+                      setEditingPlayers(true);
+                    }}
+                    className="mt-1 text-xs font-medium text-brand-700 hover:underline"
+                  >
+                    Informar número de jogadores
+                  </button>
+                </div>
+              )}
             </div>
             {racha.summary.comandas.length > 0 && (
               <div className="flex justify-between">
