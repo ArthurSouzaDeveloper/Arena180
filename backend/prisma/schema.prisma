@@ -1,0 +1,205 @@
+// GestQuadra - Sistema de gestão para arenas/societys de futebol (multi-tenant)
+// Cada arena (cliente do SaaS) tem seus próprios dados, isolados por arenaId.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────────
+
+enum Role {
+  SUPERADMIN // Dono da plataforma GestQuadra — cadastra novas arenas (sem arenaId)
+  ADMIN // Dono/gestor da arena — único perfil operacional nesta fase
+}
+
+enum ProductCategory {
+  BEBIDA
+  COMIDA
+}
+
+enum RachaStatus {
+  ABERTO // ainda em edição/uso na calculadora
+  FECHADO // valor final calculado e considerado faturamento
+}
+
+enum RachaSource {
+  MANUAL // criada pelo dono na calculadora
+  PUBLIC_BOOKING // criada por um jogador pelo link público de agendamento
+}
+
+// ─────────────────────────────────────────────────────────────
+// TENANT
+// ─────────────────────────────────────────────────────────────
+
+model Arena {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  ownerName String?
+  phone     String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Janela de funcionamento usada pelo agendamento público (mesma todos os dias).
+  bookingOpenTime  String @default("08:00")
+  bookingCloseTime String @default("23:00")
+
+  users    User[]
+  products Product[]
+  rachas   Racha[]
+  courts   Court[]
+
+  @@map("arenas")
+}
+
+// ─────────────────────────────────────────────────────────────
+// COURT = quadra física dentro de uma arena (Quadra 1, 2, 3...).
+// Cada uma tem sua própria precificação: hourlyRate cobre a primeira hora;
+// a partir daí cobra-se extraBlockPrice a cada extraBlockMinutes adicionais.
+// ─────────────────────────────────────────────────────────────
+
+model Court {
+  id                String   @id @default(uuid())
+  arenaId           String
+  arena             Arena    @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  name              String
+  hourlyRate        Decimal  @default(140) @db.Decimal(10, 2)
+  extraBlockMinutes Int      @default(20)
+  extraBlockPrice   Decimal  @default(30) @db.Decimal(10, 2)
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  rachas Racha[]
+
+  @@index([arenaId])
+  @@map("courts")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(ADMIN)
+  active       Boolean  @default(true)
+  arenaId      String?
+  arena        Arena?   @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([arenaId])
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────────────────────
+// CATÁLOGO DE PRODUTOS (bebidas/comidas) — específico de cada arena
+// ─────────────────────────────────────────────────────────────
+
+model Product {
+  id        String          @id @default(uuid())
+  arenaId   String
+  arena     Arena           @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  name      String
+  category  ProductCategory
+  price     Decimal         @db.Decimal(10, 2)
+  photoUrl  String?
+  active    Boolean         @default(true)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  rachaItems   RachaItem[]
+  comandaItems ComandaItem[]
+
+  @@index([arenaId])
+  @@map("products")
+}
+
+// ─────────────────────────────────────────────────────────────
+// RACHA = uma locação/jogo, com a divisão de valor entre os jogadores
+// ─────────────────────────────────────────────────────────────
+
+model Racha {
+  id      String @id @default(uuid())
+  arenaId String
+  arena   Arena  @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  courtId String
+  court   Court  @relation(fields: [courtId], references: [id])
+
+  date            DateTime    @default(now())
+  durationMinutes Int         @default(60)
+  courtPrice      Decimal     @db.Decimal(10, 2)
+  numberOfPlayers Int? // fica em branco até o dono fechar a conta
+  status          RachaStatus @default(ABERTO)
+  source          RachaSource @default(MANUAL)
+  notes           String?
+
+  // Preenchidos quando a racha nasce do link público de agendamento.
+  bookedByName  String?
+  bookedByPhone String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items    RachaItem[]
+  comandas Comanda[]
+
+  @@index([arenaId, date])
+  @@index([courtId, date])
+  @@map("rachas")
+}
+
+model RachaItem {
+  id        String   @id @default(uuid())
+  rachaId   String
+  racha     Racha    @relation(fields: [rachaId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Decimal  @db.Decimal(10, 2) // snapshot do preço no momento do consumo
+  createdAt DateTime @default(now())
+
+  @@index([rachaId])
+  @@map("racha_items")
+}
+
+// ─────────────────────────────────────────────────────────────
+// COMANDA = conta individual de um jogador dentro de uma racha, para
+// cobrar separadamente o consumo dele em vez de ratear com o grupo.
+// ─────────────────────────────────────────────────────────────
+
+model Comanda {
+  id         String   @id @default(uuid())
+  rachaId    String
+  racha      Racha    @relation(fields: [rachaId], references: [id], onDelete: Cascade)
+  playerName String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  items ComandaItem[]
+
+  @@index([rachaId])
+  @@map("comandas")
+}
+
+model ComandaItem {
+  id        String   @id @default(uuid())
+  comandaId String
+  comanda   Comanda  @relation(fields: [comandaId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Decimal  @db.Decimal(10, 2) // snapshot do preço no momento do consumo
+  createdAt DateTime @default(now())
+
+  @@index([comandaId])
+  @@map("comanda_items")
+}
