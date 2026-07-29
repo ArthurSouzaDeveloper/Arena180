@@ -7,7 +7,7 @@ export interface AccessTokenPayload {
   sub: string;
   role: Role;
   name: string;
-  quadraId: string | null;
+  arenaId: string | null;
 }
 
 export function hashPassword(plain: string): Promise<string> {

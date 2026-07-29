@@ -28,7 +28,7 @@ function calculateCourtPrice(
 export default function NovaRacha() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const quadra = user?.quadra;
+  const arena = user?.arena;
   const [products, setProducts] = useState<Product[]>([]);
   const [autoCalc, setAutoCalc] = useState(true);
   const [hours, setHours] = useState('1');
@@ -43,17 +43,17 @@ export default function NovaRacha() {
   }, []);
 
   const totalMinutes = (Number(hours) || 0) * 60 + (Number(minutes) || 0);
-  const hourlyRate = Number(quadra?.hourlyRate ?? 0);
-  const extraBlockMinutes = quadra?.extraBlockMinutes ?? 20;
-  const extraBlockPrice = Number(quadra?.extraBlockPrice ?? 0);
+  const hourlyRate = Number(arena?.hourlyRate ?? 0);
+  const extraBlockMinutes = arena?.extraBlockMinutes ?? 20;
+  const extraBlockPrice = Number(arena?.extraBlockPrice ?? 0);
   const calculatedCourtPrice = calculateCourtPrice(totalMinutes, hourlyRate, extraBlockMinutes, extraBlockPrice);
 
   useEffect(() => {
-    if (autoCalc && quadra) {
+    if (autoCalc && arena) {
       setCourtPrice(calculatedCourtPrice ? String(calculatedCourtPrice) : '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoCalc, totalMinutes, hourlyRate, extraBlockMinutes, extraBlockPrice, quadra]);
+  }, [autoCalc, totalMinutes, hourlyRate, extraBlockMinutes, extraBlockPrice, arena]);
 
   function setQty(productId: string, qty: number) {
     setQuantities((prev) => ({ ...prev, [productId]: Math.max(0, qty) }));
@@ -118,7 +118,7 @@ export default function NovaRacha() {
 
             {autoCalc && (
               <div className="mt-3 rounded-md bg-gray-50 p-3">
-                {quadra ? (
+                {arena ? (
                   <>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -149,7 +149,7 @@ export default function NovaRacha() {
                     </p>
                   </>
                 ) : (
-                  <p className="text-sm text-gray-500">Carregando configurações da quadra...</p>
+                  <p className="text-sm text-gray-500">Carregando configurações da arena...</p>
                 )}
               </div>
             )}

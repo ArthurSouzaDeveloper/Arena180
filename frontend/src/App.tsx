@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import RequireAuth from './components/RequireAuth';
 import Layout from './components/Layout';
+import SuperadminLayout from './components/SuperadminLayout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Produtos from './pages/Produtos';
@@ -9,6 +10,7 @@ import NovaRacha from './pages/NovaRacha';
 import Rachas from './pages/Rachas';
 import RachaDetalhe from './pages/RachaDetalhe';
 import Configuracoes from './pages/Configuracoes';
+import SuperadminArenas from './pages/SuperadminArenas';
 
 export default function App() {
   return (
@@ -16,9 +18,20 @@ export default function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
+
           <Route
             element={
-              <RequireAuth>
+              <RequireAuth role="SUPERADMIN">
+                <SuperadminLayout />
+              </RequireAuth>
+            }
+          >
+            <Route path="/plataforma" element={<SuperadminArenas />} />
+          </Route>
+
+          <Route
+            element={
+              <RequireAuth role="ADMIN">
                 <Layout />
               </RequireAuth>
             }

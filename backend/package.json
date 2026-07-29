@@ -12,7 +12,8 @@
     "prisma:migrate": "prisma migrate deploy",
     "prisma:migrate:dev": "prisma migrate dev",
     "db:push": "prisma db push",
-    "quadra:create": "ts-node --transpile-only src/scripts/create-quadra.ts",
+    "arena:create": "ts-node --transpile-only src/scripts/create-arena.ts",
+    "superadmin:create": "ts-node --transpile-only src/scripts/create-superadmin.ts",
     "lint": "eslint 'src/**/*.ts'"
   },
   "dependencies": {

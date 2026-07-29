@@ -45,7 +45,7 @@ export default function Produtos() {
   return (
     <div>
       <h1 className="text-2xl font-semibold text-gray-900">Produtos</h1>
-      <p className="mt-1 text-sm text-gray-500">Bebidas e comidas vendidas na sua quadra, com foto e preço.</p>
+      <p className="mt-1 text-sm text-gray-500">Bebidas e comidas vendidas na sua arena, com foto e preço.</p>
 
       <form onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 gap-3 rounded-lg border border-gray-200 bg-white p-5 sm:grid-cols-2 lg:grid-cols-5">
         <div className="lg:col-span-2">

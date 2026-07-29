@@ -18,17 +18,17 @@ interface UpdateProductInput {
 }
 
 export const productService = {
-  async list(quadraId: string, includeInactive = false) {
+  async list(arenaId: string, includeInactive = false) {
     return prisma.product.findMany({
-      where: { quadraId, ...(includeInactive ? {} : { active: true }) },
+      where: { arenaId, ...(includeInactive ? {} : { active: true }) },
       orderBy: [{ category: 'asc' }, { name: 'asc' }],
     });
   },
 
-  async create(quadraId: string, input: CreateProductInput) {
+  async create(arenaId: string, input: CreateProductInput) {
     return prisma.product.create({
       data: {
-        quadraId,
+        arenaId,
         name: input.name,
         category: input.category,
         price: input.price,
@@ -37,8 +37,8 @@ export const productService = {
     });
   },
 
-  async update(quadraId: string, productId: string, input: UpdateProductInput) {
-    const existing = await prisma.product.findFirst({ where: { id: productId, quadraId } });
+  async update(arenaId: string, productId: string, input: UpdateProductInput) {
+    const existing = await prisma.product.findFirst({ where: { id: productId, arenaId } });
     if (!existing) throw new NotFoundError('Produto');
 
     return prisma.product.update({
@@ -47,8 +47,8 @@ export const productService = {
     });
   },
 
-  async remove(quadraId: string, productId: string) {
-    const existing = await prisma.product.findFirst({ where: { id: productId, quadraId } });
+  async remove(arenaId: string, productId: string) {
+    const existing = await prisma.product.findFirst({ where: { id: productId, arenaId } });
     if (!existing) throw new NotFoundError('Produto');
 
     // Soft delete: produtos já usados em rachas fechadas não podem sumir do histórico.

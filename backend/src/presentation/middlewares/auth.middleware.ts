@@ -36,8 +36,8 @@ export function authorize(...roles: Role[]) {
   };
 }
 
-/** Garante que o usuário logado pertence a uma quadra (bloqueia SUPERADMIN sem tenant nas rotas operacionais). */
-export function requireQuadra(req: Request, _res: Response, next: NextFunction): void {
-  if (!req.user?.quadraId) throw new ForbiddenError('Usuário não vinculado a uma quadra');
+/** Garante que o usuário logado pertence a uma arena (bloqueia SUPERADMIN sem tenant nas rotas operacionais). */
+export function requireArena(req: Request, _res: Response, next: NextFunction): void {
+  if (!req.user?.arenaId) throw new ForbiddenError('Usuário não vinculado a uma arena');
   next();
 }

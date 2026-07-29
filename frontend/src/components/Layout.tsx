@@ -23,7 +23,7 @@ export default function Layout() {
       <aside className="border-b border-gray-200 bg-white md:w-56 md:border-b-0 md:border-r">
         <div className="px-5 py-4">
           <p className="text-lg font-semibold text-brand-700">GestQuadra</p>
-          <p className="text-sm text-gray-500">{user?.quadra?.name}</p>
+          <p className="text-sm text-gray-500">{user?.arena?.name}</p>
         </div>
         <nav className="flex gap-1 overflow-x-auto px-2 pb-2 md:flex-col md:overflow-visible md:px-2">
           {navItems.map(({ to, label, icon: Icon, end }) => (

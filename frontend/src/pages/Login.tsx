@@ -15,8 +15,8 @@ export default function Login() {
     setError(null);
     setSubmitting(true);
     try {
-      await login(email, password);
-      navigate('/');
+      const loggedUser = await login(email, password);
+      navigate(loggedUser.role === 'SUPERADMIN' ? '/plataforma' : '/');
     } catch {
       setError('E-mail ou senha inválidos.');
     } finally {
@@ -28,7 +28,7 @@ export default function Login() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-sm rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
         <h1 className="text-xl font-semibold text-brand-700">GestQuadra</h1>
-        <p className="mt-1 text-sm text-gray-500">Acesso do administrador da quadra</p>
+        <p className="mt-1 text-sm text-gray-500">Acesso do administrador da arena</p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>

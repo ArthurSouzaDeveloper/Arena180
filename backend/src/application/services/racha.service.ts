@@ -89,29 +89,29 @@ function summarize(racha: RachaWithRelations) {
   };
 }
 
-async function findOwnedRacha(quadraId: string, rachaId: string) {
-  const racha = await prisma.racha.findFirst({ where: { id: rachaId, quadraId } });
+async function findOwnedRacha(arenaId: string, rachaId: string) {
+  const racha = await prisma.racha.findFirst({ where: { id: rachaId, arenaId } });
   if (!racha) throw new NotFoundError('Racha');
   return racha;
 }
 
-async function validateProductsBelongToQuadra(quadraId: string, items: RachaItemInput[]) {
+async function validateProductsBelongToArena(arenaId: string, items: RachaItemInput[]) {
   if (items.length === 0) return new Map<string, Prisma.Decimal>();
   const productIds = items.map((item) => item.productId);
-  const products = await prisma.product.findMany({ where: { id: { in: productIds }, quadraId } });
+  const products = await prisma.product.findMany({ where: { id: { in: productIds }, arenaId } });
   if (products.length !== new Set(productIds).size) {
-    throw new AppError('Um ou mais produtos não pertencem a esta quadra', 400, 'INVALID_PRODUCT');
+    throw new AppError('Um ou mais produtos não pertencem a esta arena', 400, 'INVALID_PRODUCT');
   }
   return new Map(products.map((p) => [p.id, p.price]));
 }
 
 export const rachaService = {
-  async create(quadraId: string, input: CreateRachaInput) {
-    const priceByProduct = await validateProductsBelongToQuadra(quadraId, input.items);
+  async create(arenaId: string, input: CreateRachaInput) {
+    const priceByProduct = await validateProductsBelongToArena(arenaId, input.items);
 
     const racha = await prisma.racha.create({
       data: {
-        quadraId,
+        arenaId,
         date: input.date ?? new Date(),
         courtPrice: input.courtPrice,
         numberOfPlayers: input.numberOfPlayers,
@@ -129,16 +129,16 @@ export const rachaService = {
     return { ...racha, summary: summarize(racha) };
   },
 
-  async get(quadraId: string, rachaId: string) {
-    const racha = await prisma.racha.findFirst({ where: { id: rachaId, quadraId }, include: rachaInclude });
+  async get(arenaId: string, rachaId: string) {
+    const racha = await prisma.racha.findFirst({ where: { id: rachaId, arenaId }, include: rachaInclude });
     if (!racha) throw new NotFoundError('Racha');
     return { ...racha, summary: summarize(racha) };
   },
 
-  async list(quadraId: string, from?: Date, to?: Date, status?: RachaStatus) {
+  async list(arenaId: string, from?: Date, to?: Date, status?: RachaStatus) {
     const rachas = await prisma.racha.findMany({
       where: {
-        quadraId,
+        arenaId,
         ...(from || to ? { date: { gte: from, lte: to } } : {}),
         ...(status ? { status } : {}),
       },
@@ -148,15 +148,15 @@ export const rachaService = {
     return rachas.map((racha) => ({ ...racha, summary: summarize(racha) }));
   },
 
-  async setStatus(quadraId: string, rachaId: string, status: RachaStatus) {
-    await findOwnedRacha(quadraId, rachaId);
+  async setStatus(arenaId: string, rachaId: string, status: RachaStatus) {
+    await findOwnedRacha(arenaId, rachaId);
     const racha = await prisma.racha.update({ where: { id: rachaId }, data: { status }, include: rachaInclude });
     return { ...racha, summary: summarize(racha) };
   },
 
-  async addComanda(quadraId: string, rachaId: string, input: ComandaInput) {
-    await findOwnedRacha(quadraId, rachaId);
-    const priceByProduct = await validateProductsBelongToQuadra(quadraId, input.items);
+  async addComanda(arenaId: string, rachaId: string, input: ComandaInput) {
+    await findOwnedRacha(arenaId, rachaId);
+    const priceByProduct = await validateProductsBelongToArena(arenaId, input.items);
 
     await prisma.comanda.create({
       data: {
@@ -172,16 +172,16 @@ export const rachaService = {
       },
     });
 
-    return this.get(quadraId, rachaId);
+    return this.get(arenaId, rachaId);
   },
 
-  async updateComanda(quadraId: string, rachaId: string, comandaId: string, input: Partial<ComandaInput>) {
-    await findOwnedRacha(quadraId, rachaId);
+  async updateComanda(arenaId: string, rachaId: string, comandaId: string, input: Partial<ComandaInput>) {
+    await findOwnedRacha(arenaId, rachaId);
     const comanda = await prisma.comanda.findFirst({ where: { id: comandaId, rachaId } });
     if (!comanda) throw new NotFoundError('Comanda');
 
     if (input.items) {
-      const priceByProduct = await validateProductsBelongToQuadra(quadraId, input.items);
+      const priceByProduct = await validateProductsBelongToArena(arenaId, input.items);
       await prisma.comandaItem.deleteMany({ where: { comandaId } });
       await prisma.comanda.update({
         where: { id: comandaId },
@@ -200,14 +200,14 @@ export const rachaService = {
       await prisma.comanda.update({ where: { id: comandaId }, data: { playerName: input.playerName } });
     }
 
-    return this.get(quadraId, rachaId);
+    return this.get(arenaId, rachaId);
   },
 
-  async removeComanda(quadraId: string, rachaId: string, comandaId: string) {
-    await findOwnedRacha(quadraId, rachaId);
+  async removeComanda(arenaId: string, rachaId: string, comandaId: string) {
+    await findOwnedRacha(arenaId, rachaId);
     const comanda = await prisma.comanda.findFirst({ where: { id: comandaId, rachaId } });
     if (!comanda) throw new NotFoundError('Comanda');
     await prisma.comanda.delete({ where: { id: comandaId } });
-    return this.get(quadraId, rachaId);
+    return this.get(arenaId, rachaId);
   },
 };

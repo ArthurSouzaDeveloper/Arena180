@@ -2,7 +2,7 @@ export type Role = 'SUPERADMIN' | 'ADMIN';
 export type ProductCategory = 'BEBIDA' | 'COMIDA';
 export type RachaStatus = 'ABERTO' | 'FECHADO';
 
-export interface Quadra {
+export interface Arena {
   id: string;
   slug: string;
   name: string;
@@ -16,12 +16,30 @@ export interface User {
   name: string;
   email: string;
   role: Role;
-  quadra: Quadra | null;
+  arena: Arena | null;
+}
+
+export interface ArenaAdmin {
+  id: string;
+  name: string;
+  email: string;
+  active: boolean;
+}
+
+export interface ArenaListItem {
+  id: string;
+  name: string;
+  slug: string;
+  active: boolean;
+  createdAt: string;
+  admins: ArenaAdmin[];
+  rachasCount: number;
+  productsCount: number;
 }
 
 export interface Product {
   id: string;
-  quadraId: string;
+  arenaId: string;
   name: string;
   category: ProductCategory;
   price: string;

@@ -32,7 +32,7 @@ export const closeRachaSchema = z.object({
   status: z.enum(['ABERTO', 'FECHADO']),
 });
 
-export const updateQuadraSettingsSchema = z.object({
+export const updateArenaSettingsSchema = z.object({
   hourlyRate: z.coerce.number().positive('Valor da primeira hora deve ser maior que zero'),
   extraBlockMinutes: z.coerce.number().int().positive('Duração do bloco extra deve ser maior que zero'),
   extraBlockPrice: z.coerce.number().nonnegative('Valor do bloco extra não pode ser negativo'),
@@ -51,6 +51,21 @@ export const createComandaSchema = z.object({
 export const updateComandaSchema = z.object({
   playerName: z.string().min(1, 'Nome do jogador é obrigatório').optional(),
   items: z.array(comandaItemSchema).optional(),
+});
+
+export const createArenaSchema = z.object({
+  name: z.string().min(2, 'Nome muito curto'),
+  slug: z
+    .string()
+    .min(2, 'Identificador muito curto')
+    .regex(/^[a-z0-9-]+$/, 'Use apenas letras minúsculas, números e hífen'),
+  adminName: z.string().min(2, 'Nome do responsável muito curto'),
+  adminEmail: z.string().email('E-mail inválido'),
+  adminPassword: z.string().min(8, 'Senha deve ter ao menos 8 caracteres'),
+});
+
+export const setArenaActiveSchema = z.object({
+  active: z.coerce.boolean(),
 });
 
 export const listRachasQuerySchema = z.object({

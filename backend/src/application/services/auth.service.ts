@@ -6,14 +6,14 @@ import { maskEmail } from '../../utils/mask';
 
 export const authService = {
   async login(email: string, password: string) {
-    const user = await prisma.user.findUnique({ where: { email }, include: { quadra: true } });
+    const user = await prisma.user.findUnique({ where: { email }, include: { arena: true } });
     if (!user || !user.active) {
       logger.warn('login_failed', { email: maskEmail(email), reason: user ? 'inactive_user' : 'user_not_found' });
       throw new UnauthorizedError('Credenciais inválidas');
     }
-    if (user.quadra && !user.quadra.active) {
-      logger.warn('login_failed', { email: maskEmail(email), reason: 'inactive_quadra', userId: user.id });
-      throw new UnauthorizedError('Quadra inativa. Contate o suporte.');
+    if (user.arena && !user.arena.active) {
+      logger.warn('login_failed', { email: maskEmail(email), reason: 'inactive_arena', userId: user.id });
+      throw new UnauthorizedError('Arena inativa. Contate o suporte.');
     }
 
     const ok = await comparePassword(password, user.passwordHash);
@@ -26,7 +26,7 @@ export const authService = {
       sub: user.id,
       role: user.role,
       name: user.name,
-      quadraId: user.quadraId,
+      arenaId: user.arenaId,
     });
 
     return {
@@ -36,14 +36,14 @@ export const authService = {
         name: user.name,
         email: user.email,
         role: user.role,
-        quadra: user.quadra
+        arena: user.arena
           ? {
-              id: user.quadra.id,
-              slug: user.quadra.slug,
-              name: user.quadra.name,
-              hourlyRate: user.quadra.hourlyRate,
-              extraBlockMinutes: user.quadra.extraBlockMinutes,
-              extraBlockPrice: user.quadra.extraBlockPrice,
+              id: user.arena.id,
+              slug: user.arena.slug,
+              name: user.arena.name,
+              hourlyRate: user.arena.hourlyRate,
+              extraBlockMinutes: user.arena.extraBlockMinutes,
+              extraBlockPrice: user.arena.extraBlockPrice,
             }
           : null,
       },
@@ -59,7 +59,7 @@ export const authService = {
         email: true,
         role: true,
         active: true,
-        quadra: {
+        arena: {
           select: {
             id: true,
             slug: true,

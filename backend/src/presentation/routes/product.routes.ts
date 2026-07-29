@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { asyncHandler } from '../../utils/http';
-import { authenticate, requireQuadra } from '../middlewares/auth.middleware';
+import { authenticate, requireArena } from '../middlewares/auth.middleware';
 import { validateBody } from '../middlewares/validate.middleware';
 import { createProductSchema, updateProductSchema } from '../validators/schemas';
 import { productService } from '../../application/services/product.service';
@@ -8,7 +8,7 @@ import { uploadProductPhoto, verifyUploadedImage } from '../middlewares/upload.m
 import { env } from '../../config/env';
 
 const router = Router();
-router.use(authenticate, requireQuadra);
+router.use(authenticate, requireArena);
 
 function photoUrlFor(filename?: string): string | undefined {
   if (!filename) return undefined;
@@ -26,7 +26,7 @@ router.get(
   '/',
   asyncHandler(async (req, res) => {
     const includeInactive = req.query.includeInactive === 'true';
-    res.json(await productService.list(req.user!.quadraId!, includeInactive));
+    res.json(await productService.list(req.user!.arenaId!, includeInactive));
   }),
 );
 
@@ -37,7 +37,7 @@ router.post(
   validateBody(createProductSchema),
   asyncHandler(async (req, res) => {
     const photoUrl = photoUrlFor(req.file?.filename);
-    const product = await productService.create(req.user!.quadraId!, { ...req.body, photoUrl });
+    const product = await productService.create(req.user!.arenaId!, { ...req.body, photoUrl });
     res.status(201).json(product);
   }),
 );
@@ -49,7 +49,7 @@ router.put(
   validateBody(updateProductSchema),
   asyncHandler(async (req, res) => {
     const photoUrl = photoUrlFor(req.file?.filename);
-    const product = await productService.update(req.user!.quadraId!, req.params.id, {
+    const product = await productService.update(req.user!.arenaId!, req.params.id, {
       ...req.body,
       ...(photoUrl ? { photoUrl } : {}),
     });
@@ -60,7 +60,7 @@ router.put(
 router.delete(
   '/:id',
   asyncHandler(async (req, res) => {
-    await productService.remove(req.user!.quadraId!, req.params.id);
+    await productService.remove(req.user!.arenaId!, req.params.id);
     res.status(204).end();
   }),
 );

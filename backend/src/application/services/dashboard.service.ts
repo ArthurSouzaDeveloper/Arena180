@@ -23,7 +23,7 @@ function startOfDay(d: Date): Date {
 }
 
 export const dashboardService = {
-  async summary(quadraId: string) {
+  async summary(arenaId: string) {
     const now = new Date();
     const todayStart = startOfDay(now);
     const weekStart = new Date(todayStart);
@@ -31,7 +31,7 @@ export const dashboardService = {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
     const rachas = await prisma.racha.findMany({
-      where: { quadraId, status: RachaStatus.FECHADO, date: { gte: monthStart } },
+      where: { arenaId, status: RachaStatus.FECHADO, date: { gte: monthStart } },
       include: { items: true, comandas: { include: { items: true } } },
     });
 

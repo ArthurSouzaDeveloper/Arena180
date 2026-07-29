@@ -5,7 +5,7 @@ import { User } from '../types';
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -34,10 +34,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(res.data);
   }
 
-  async function login(email: string, password: string) {
+  async function login(email: string, password: string): Promise<User> {
     const res = await api.post('/auth/login', { email, password });
     localStorage.setItem('gestquadra_token', res.data.accessToken);
     setUser(res.data.user);
+    return res.data.user as User;
   }
 
   function logout() {

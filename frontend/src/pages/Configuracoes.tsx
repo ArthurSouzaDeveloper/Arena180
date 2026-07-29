@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
-import { Quadra } from '../types';
+import { Arena } from '../types';
 
 function formatBRL(value: number): string {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -17,7 +17,7 @@ export default function Configuracoes() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    api.get<Quadra>('/quadra/settings').then((res) => {
+    api.get<Arena>('/arena/settings').then((res) => {
       setHourlyRate(res.data.hourlyRate);
       setExtraBlockMinutes(String(res.data.extraBlockMinutes));
       setExtraBlockPrice(res.data.extraBlockPrice);
@@ -30,7 +30,7 @@ export default function Configuracoes() {
     setSaving(true);
     setSaved(false);
     try {
-      await api.put('/quadra/settings', {
+      await api.put('/arena/settings', {
         hourlyRate: Number(hourlyRate),
         extraBlockMinutes: Number(extraBlockMinutes),
         extraBlockPrice: Number(extraBlockPrice),
@@ -55,7 +55,7 @@ export default function Configuracoes() {
     <div>
       <h1 className="text-2xl font-semibold text-gray-900">Configurações</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Defina a precificação padrão da quadra usada pela calculadora por tempo na Nova racha.
+        Defina a precificação padrão da arena usada pela calculadora por tempo na Nova racha.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-6 max-w-lg space-y-4 rounded-lg border border-gray-200 bg-white p-5">
