@@ -33,6 +33,18 @@ function weekdayOf(date: string) {
   return new Date(`${date}T00:00:00`).getDay();
 }
 
+async function findBookingByToken(quadraSlug: string, bookingId: string, token: string) {
+  const quadra = await findQuadraBySlug(quadraSlug);
+  const booking = await prisma.booking.findFirst({
+    where: { id: bookingId, cancelToken: token, court: { quadraId: quadra.id } },
+    include: { court: { select: { name: true } } },
+  });
+  if (!booking) {
+    throw new NotFoundError("Reserva não encontrada");
+  }
+  return booking;
+}
+
 export const bookingService = {
   async listCourts(quadraSlug: string) {
     const quadra = await findQuadraBySlug(quadraSlug);
@@ -167,5 +179,47 @@ export const bookingService = {
       }
       throw err;
     }
+  },
+
+  async getByToken(quadraSlug: string, bookingId: string, token: string) {
+    return findBookingByToken(quadraSlug, bookingId, token);
+  },
+
+  async cancelByToken(quadraSlug: string, bookingId: string, token: string) {
+    const booking = await findBookingByToken(quadraSlug, bookingId, token);
+
+    if (booking.status === "CANCELADA") {
+      throw new AppError("Essa reserva já está cancelada");
+    }
+
+    const startsAt = new Date(`${booking.date.toISOString().slice(0, 10)}T${booking.startTime}:00`);
+    if (startsAt.getTime() < Date.now()) {
+      throw new AppError("Não é possível cancelar uma reserva que já passou");
+    }
+
+    return prisma.booking.update({ where: { id: booking.id }, data: { status: "CANCELADA" } });
+  },
+
+  async listForCourt(quadraId: string, courtId: string) {
+    const court = await prisma.court.findFirst({ where: { id: courtId, quadraId } });
+    if (!court) {
+      throw new NotFoundError("Quadra não encontrada");
+    }
+    return prisma.booking.findMany({
+      where: { courtId, status: "CONFIRMADA", date: { gte: new Date(new Date().toISOString().slice(0, 10)) } },
+      orderBy: [{ date: "asc" }, { startTime: "asc" }],
+    });
+  },
+
+  async adminCancel(quadraId: string, courtId: string, bookingId: string) {
+    const court = await prisma.court.findFirst({ where: { id: courtId, quadraId } });
+    if (!court) {
+      throw new NotFoundError("Quadra não encontrada");
+    }
+    const booking = await prisma.booking.findFirst({ where: { id: bookingId, courtId } });
+    if (!booking) {
+      throw new NotFoundError("Reserva não encontrada");
+    }
+    return prisma.booking.update({ where: { id: bookingId }, data: { status: "CANCELADA" } });
   },
 };

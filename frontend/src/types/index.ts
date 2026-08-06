@@ -92,3 +92,20 @@ export interface PublicCourt {
   extraBlockMinutes: number;
   extraBlockPrice: string | null;
 }
+
+export interface Booking {
+  id: string;
+  courtId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  customerName: string;
+  customerPhone: string;
+  totalPrice: string;
+  status: "CONFIRMADA" | "CANCELADA";
+  cancelToken: string;
+}
+
+export interface BookingWithCourt extends Booking {
+  court: { name: string };
+}

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { courtService } from "../../application/services/courtService";
+import { bookingService } from "../../application/services/bookingService";
 import { asyncHandler } from "../middlewares/errorHandler";
 import { authMiddleware } from "../middlewares/auth";
 
@@ -96,6 +97,22 @@ router.delete(
   asyncHandler(async (req, res) => {
     await courtService.removeBlock(req.params.id, req.auth!.quadraId, req.params.blockId);
     res.status(204).send();
+  }),
+);
+
+router.get(
+  "/:id/bookings",
+  asyncHandler(async (req, res) => {
+    const bookings = await bookingService.listForCourt(req.auth!.quadraId, req.params.id);
+    res.json(bookings);
+  }),
+);
+
+router.put(
+  "/:id/bookings/:bookingId/cancel",
+  asyncHandler(async (req, res) => {
+    const booking = await bookingService.adminCancel(req.auth!.quadraId, req.params.id, req.params.bookingId);
+    res.json(booking);
   }),
 );
 

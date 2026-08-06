@@ -8,12 +8,14 @@ import { NewRachaPage } from "./pages/NewRachaPage";
 import { RachaHistoryPage } from "./pages/RachaHistoryPage";
 import { CourtsPage } from "./pages/CourtsPage";
 import { PublicBookingPage } from "./pages/PublicBookingPage";
+import { CancelBookingPage } from "./pages/CancelBookingPage";
 
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/agendar/:slug" element={<PublicBookingPage />} />
+      <Route path="/agendar/:slug/cancelar/:bookingId" element={<CancelBookingPage />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
           <Route path="/" element={<DashboardPage />} />

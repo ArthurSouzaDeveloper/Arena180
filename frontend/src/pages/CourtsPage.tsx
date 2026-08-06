@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { api } from "../lib/api";
-import { Court, CourtHours } from "../types";
+import { Booking, Court, CourtHours } from "../types";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const WEEKDAY_LABELS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -144,6 +144,21 @@ function CourtCard({
   const [blockStart, setBlockStart] = useState("");
   const [blockEnd, setBlockEnd] = useState("");
   const [blockReason, setBlockReason] = useState("");
+  const [bookings, setBookings] = useState<Booking[]>([]);
+
+  function loadBookings() {
+    api.get(`/courts/${court.id}/bookings`).then((res) => setBookings(res.data));
+  }
+
+  useEffect(() => {
+    loadBookings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [court.id]);
+
+  async function cancelBooking(bookingId: string) {
+    await api.put(`/courts/${court.id}/bookings/${bookingId}/cancel`);
+    loadBookings();
+  }
 
   function updateHour(weekday: number, patch: Partial<CourtHours>) {
     setHours((prev) => prev.map((h) => (h.weekday === weekday ? { ...h, ...patch } : h)));
@@ -303,6 +318,24 @@ function CourtCard({
               </span>
               <button onClick={() => removeBlock(block.id)} className="text-xs text-red-600 hover:underline">
                 Remover
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="mt-4 border-t pt-4">
+        <p className="mb-2 text-sm font-medium text-gray-700">Próximas reservas</p>
+        <ul className="space-y-1 text-sm">
+          {bookings.length === 0 && <li className="text-gray-400">Nenhuma reserva confirmada.</li>}
+          {bookings.map((booking) => (
+            <li key={booking.id} className="flex items-center justify-between rounded bg-gray-50 px-2 py-1">
+              <span>
+                {new Date(`${booking.date.slice(0, 10)}T00:00:00`).toLocaleDateString("pt-BR")} ·{" "}
+                {booking.startTime}–{booking.endTime} · {booking.customerName} ({booking.customerPhone})
+              </span>
+              <button onClick={() => cancelBooking(booking.id)} className="text-xs text-red-600 hover:underline">
+                Cancelar
               </button>
             </li>
           ))}

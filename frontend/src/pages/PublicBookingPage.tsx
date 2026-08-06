@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { api } from "../lib/api";
-import { Availability, PublicCourt } from "../types";
+import { Availability, Booking, PublicCourt } from "../types";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -22,6 +22,7 @@ export function PublicBookingPage() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [confirmedBooking, setConfirmedBooking] = useState<Booking | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -56,8 +57,9 @@ export function PublicBookingPage() {
     setSubmitting(true);
     setError(null);
     setSuccess(null);
+    setConfirmedBooking(null);
     try {
-      await api.post(`/booking/${slug}/courts/${courtId}`, {
+      const bookingRes = await api.post(`/booking/${slug}/courts/${courtId}`, {
         date,
         startTime: selectedSlot,
         withExtraBlock,
@@ -65,6 +67,7 @@ export function PublicBookingPage() {
         customerPhone,
       });
       setSuccess("Reserva confirmada com sucesso!");
+      setConfirmedBooking(bookingRes.data);
       setSelectedSlot(null);
       setCustomerName("");
       setCustomerPhone("");
@@ -112,6 +115,25 @@ export function PublicBookingPage() {
               />
             </div>
           </div>
+
+          {confirmedBooking && (
+            <div className="rounded-lg border border-primary-200 bg-primary-50 p-4 text-sm">
+              <p className="mb-1 font-semibold text-primary-700">{success}</p>
+              <p className="text-gray-600">
+                {new Date(`${confirmedBooking.date.slice(0, 10)}T00:00:00`).toLocaleDateString("pt-BR")} ·{" "}
+                {confirmedBooking.startTime}–{confirmedBooking.endTime}
+              </p>
+              <p className="mt-2">
+                Guarde este link para cancelar sua reserva se precisar:{" "}
+                <Link
+                  to={`/agendar/${slug}/cancelar/${confirmedBooking.id}?token=${confirmedBooking.cancelToken}`}
+                  className="font-semibold text-primary-700 underline"
+                >
+                  Cancelar esta reserva
+                </Link>
+              </p>
+            </div>
+          )}
 
           {loadingAvailability && <p className="text-sm text-gray-500">Carregando horários...</p>}
 
@@ -183,7 +205,6 @@ export function PublicBookingPage() {
               </div>
 
               {error && <p className="text-sm text-red-600">{error}</p>}
-              {success && <p className="text-sm text-primary-700">{success}</p>}
 
               <button
                 onClick={handleSubmit}

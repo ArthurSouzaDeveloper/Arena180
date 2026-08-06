@@ -41,4 +41,24 @@ router.post(
   }),
 );
 
+const tokenSchema = z.object({ token: z.string().min(1) });
+
+router.get(
+  "/:quadraSlug/bookings/:bookingId",
+  asyncHandler(async (req, res) => {
+    const { token } = tokenSchema.parse(req.query);
+    const booking = await bookingService.getByToken(req.params.quadraSlug, req.params.bookingId, token);
+    res.json(booking);
+  }),
+);
+
+router.post(
+  "/:quadraSlug/bookings/:bookingId/cancel",
+  asyncHandler(async (req, res) => {
+    const { token } = tokenSchema.parse(req.body);
+    const booking = await bookingService.cancelByToken(req.params.quadraSlug, req.params.bookingId, token);
+    res.json(booking);
+  }),
+);
+
 export default router;

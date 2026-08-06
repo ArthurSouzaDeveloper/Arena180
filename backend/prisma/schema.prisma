@@ -151,6 +151,7 @@ model Booking {
   customerPhone String        @map("customer_phone")
   totalPrice    Decimal       @map("total_price") @db.Decimal(10, 2)
   status        BookingStatus @default(CONFIRMADA)
+  cancelToken   String        @unique @default(uuid()) @map("cancel_token")
   createdAt     DateTime      @default(now())
 
   court Court @relation(fields: [courtId], references: [id], onDelete: Cascade)
