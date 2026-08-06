@@ -25,9 +25,15 @@ export const authService = {
       throw new UnauthorizedError("E-mail ou senha inválidos");
     }
 
-    const token = jwt.sign({ userId: user.id, quadraId: user.quadraId }, env.jwtSecret, {
-      expiresIn: env.jwtExpiresIn,
-    } as jwt.SignOptions);
+    if (user.role === "OWNER" && (!user.quadra || !user.quadra.active)) {
+      throw new UnauthorizedError("Esta arena está desativada. Fale com o suporte.");
+    }
+
+    const token = jwt.sign(
+      { userId: user.id, quadraId: user.quadraId, role: user.role },
+      env.jwtSecret,
+      { expiresIn: env.jwtExpiresIn } as jwt.SignOptions,
+    );
 
     return {
       token,
@@ -35,12 +41,15 @@ export const authService = {
         id: user.id,
         name: user.name,
         email: user.email,
+        role: user.role,
       },
-      quadra: {
-        id: user.quadra.id,
-        name: user.quadra.name,
-        slug: user.quadra.slug,
-      },
+      quadra: user.quadra
+        ? {
+            id: user.quadra.id,
+            name: user.quadra.name,
+            slug: user.quadra.slug,
+          }
+        : null,
     };
   },
 
@@ -54,11 +63,14 @@ export const authService = {
       id: user.id,
       name: user.name,
       email: user.email,
-      quadra: {
-        id: user.quadra.id,
-        name: user.quadra.name,
-        slug: user.quadra.slug,
-      },
+      role: user.role,
+      quadra: user.quadra
+        ? {
+            id: user.quadra.id,
+            name: user.quadra.name,
+            slug: user.quadra.slug,
+          }
+        : null,
     };
   },
 };

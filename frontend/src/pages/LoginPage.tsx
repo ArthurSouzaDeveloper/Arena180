@@ -10,7 +10,7 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   if (user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={user.role === "SUPERADMIN" ? "/superadmin" : "/"} replace />;
   }
 
   async function handleSubmit(event: FormEvent) {

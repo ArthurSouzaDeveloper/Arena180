@@ -5,7 +5,8 @@ import { UnauthorizedError } from "../../domain/errors";
 
 export interface AuthPayload {
   userId: string;
-  quadraId: string;
+  quadraId: string | null;
+  role: "OWNER" | "SUPERADMIN";
 }
 
 declare global {
@@ -32,4 +33,18 @@ export function authMiddleware(req: Request, _res: Response, next: NextFunction)
   } catch {
     throw new UnauthorizedError("Token inválido ou expirado");
   }
+}
+
+export function ownerMiddleware(req: Request, _res: Response, next: NextFunction) {
+  if (req.auth?.role !== "OWNER" || !req.auth.quadraId) {
+    throw new UnauthorizedError("Acesso restrito ao dono da arena");
+  }
+  next();
+}
+
+export function superadminMiddleware(req: Request, _res: Response, next: NextFunction) {
+  if (req.auth?.role !== "SUPERADMIN") {
+    throw new UnauthorizedError("Acesso restrito ao superadmin");
+  }
+  next();
 }

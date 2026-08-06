@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { SuperadminRoute } from "./components/SuperadminRoute";
 import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ProductsPage } from "./pages/ProductsPage";
@@ -9,6 +10,7 @@ import { RachaHistoryPage } from "./pages/RachaHistoryPage";
 import { CourtsPage } from "./pages/CourtsPage";
 import { PublicBookingPage } from "./pages/PublicBookingPage";
 import { CancelBookingPage } from "./pages/CancelBookingPage";
+import { SuperadminPage } from "./pages/SuperadminPage";
 
 export default function App() {
   return (
@@ -16,6 +18,9 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/agendar/:slug" element={<PublicBookingPage />} />
       <Route path="/agendar/:slug/cancelar/:bookingId" element={<CancelBookingPage />} />
+      <Route element={<SuperadminRoute />}>
+        <Route path="/superadmin" element={<SuperadminPage />} />
+      </Route>
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
           <Route path="/" element={<DashboardPage />} />

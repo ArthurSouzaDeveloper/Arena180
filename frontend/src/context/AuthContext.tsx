@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     api
       .get("/auth/me")
       .then((res) => {
-        setUser({ id: res.data.id, name: res.data.name, email: res.data.email });
+        setUser({ id: res.data.id, name: res.data.name, email: res.data.email, role: res.data.role });
         setQuadra(res.data.quadra);
       })
       .catch(() => {

@@ -3,11 +3,12 @@ import { z } from "zod";
 import { courtService } from "../../application/services/courtService";
 import { bookingService } from "../../application/services/bookingService";
 import { asyncHandler } from "../middlewares/errorHandler";
-import { authMiddleware } from "../middlewares/auth";
+import { authMiddleware, ownerMiddleware } from "../middlewares/auth";
 
 const router = Router();
 
 router.use(authMiddleware);
+router.use(ownerMiddleware);
 
 const createSchema = z.object({
   name: z.string().min(1),
@@ -43,7 +44,7 @@ const blockSchema = z.object({
 router.get(
   "/",
   asyncHandler(async (req, res) => {
-    const courts = await courtService.list(req.auth!.quadraId);
+    const courts = await courtService.list(req.auth!.quadraId!);
     res.json(courts);
   }),
 );
@@ -52,7 +53,7 @@ router.post(
   "/",
   asyncHandler(async (req, res) => {
     const data = createSchema.parse(req.body);
-    const court = await courtService.create({ quadraId: req.auth!.quadraId, ...data });
+    const court = await courtService.create({ quadraId: req.auth!.quadraId!, ...data });
     res.status(201).json(court);
   }),
 );
@@ -61,7 +62,7 @@ router.put(
   "/:id",
   asyncHandler(async (req, res) => {
     const data = updateSchema.parse(req.body);
-    const court = await courtService.update(req.params.id, req.auth!.quadraId, data);
+    const court = await courtService.update(req.params.id, req.auth!.quadraId!, data);
     res.json(court);
   }),
 );
@@ -69,7 +70,7 @@ router.put(
 router.delete(
   "/:id",
   asyncHandler(async (req, res) => {
-    await courtService.remove(req.params.id, req.auth!.quadraId);
+    await courtService.remove(req.params.id, req.auth!.quadraId!);
     res.status(204).send();
   }),
 );
@@ -78,7 +79,7 @@ router.put(
   "/:id/hours",
   asyncHandler(async (req, res) => {
     const hours = hoursSchema.parse(req.body);
-    const result = await courtService.setHours(req.params.id, req.auth!.quadraId, hours);
+    const result = await courtService.setHours(req.params.id, req.auth!.quadraId!, hours);
     res.json(result);
   }),
 );
@@ -87,7 +88,7 @@ router.post(
   "/:id/blocks",
   asyncHandler(async (req, res) => {
     const data = blockSchema.parse(req.body);
-    const block = await courtService.addBlock(req.params.id, req.auth!.quadraId, data);
+    const block = await courtService.addBlock(req.params.id, req.auth!.quadraId!, data);
     res.status(201).json(block);
   }),
 );
@@ -95,7 +96,7 @@ router.post(
 router.delete(
   "/:id/blocks/:blockId",
   asyncHandler(async (req, res) => {
-    await courtService.removeBlock(req.params.id, req.auth!.quadraId, req.params.blockId);
+    await courtService.removeBlock(req.params.id, req.auth!.quadraId!, req.params.blockId);
     res.status(204).send();
   }),
 );
@@ -103,7 +104,7 @@ router.delete(
 router.get(
   "/:id/bookings",
   asyncHandler(async (req, res) => {
-    const bookings = await bookingService.listForCourt(req.auth!.quadraId, req.params.id);
+    const bookings = await bookingService.listForCourt(req.auth!.quadraId!, req.params.id);
     res.json(bookings);
   }),
 );
@@ -111,7 +112,7 @@ router.get(
 router.put(
   "/:id/bookings/:bookingId/cancel",
   asyncHandler(async (req, res) => {
-    const booking = await bookingService.adminCancel(req.auth!.quadraId, req.params.id, req.params.bookingId);
+    const booking = await bookingService.adminCancel(req.auth!.quadraId!, req.params.id, req.params.bookingId);
     res.json(booking);
   }),
 );

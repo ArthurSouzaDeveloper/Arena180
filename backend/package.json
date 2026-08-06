@@ -10,7 +10,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
-    "quadra:create": "tsx src/scripts/create-quadra.ts"
+    "quadra:create": "tsx src/scripts/create-quadra.ts",
+    "superadmin:create": "tsx src/scripts/create-superadmin.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",

@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-export function ProtectedRoute() {
+export function SuperadminRoute() {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -12,8 +12,8 @@ export function ProtectedRoute() {
     return <Navigate to="/login" replace />;
   }
 
-  if (user.role === "SUPERADMIN") {
-    return <Navigate to="/superadmin" replace />;
+  if (user.role !== "SUPERADMIN") {
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;

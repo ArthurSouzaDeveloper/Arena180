@@ -2,11 +2,12 @@ import { Router } from "express";
 import { z } from "zod";
 import { rachaService } from "../../application/services/rachaService";
 import { asyncHandler } from "../middlewares/errorHandler";
-import { authMiddleware } from "../middlewares/auth";
+import { authMiddleware, ownerMiddleware } from "../middlewares/auth";
 
 const router = Router();
 
 router.use(authMiddleware);
+router.use(ownerMiddleware);
 
 const itemSchema = z.object({
   productId: z.string().uuid().optional(),
@@ -25,7 +26,7 @@ const createSchema = z.object({
 router.get(
   "/",
   asyncHandler(async (req, res) => {
-    const rachas = await rachaService.list(req.auth!.quadraId);
+    const rachas = await rachaService.list(req.auth!.quadraId!);
     res.json(rachas);
   }),
 );
@@ -33,7 +34,7 @@ router.get(
 router.get(
   "/:id",
   asyncHandler(async (req, res) => {
-    const racha = await rachaService.getById(req.params.id, req.auth!.quadraId);
+    const racha = await rachaService.getById(req.params.id, req.auth!.quadraId!);
     res.json(racha);
   }),
 );
@@ -52,7 +53,7 @@ router.post(
   asyncHandler(async (req, res) => {
     const { courtValue, playersCount, playedAt, items } = createSchema.parse(req.body);
     const racha = await rachaService.create({
-      quadraId: req.auth!.quadraId,
+      quadraId: req.auth!.quadraId!,
       courtValue,
       playersCount,
       playedAt,
@@ -65,7 +66,7 @@ router.post(
 router.delete(
   "/:id",
   asyncHandler(async (req, res) => {
-    await rachaService.remove(req.params.id, req.auth!.quadraId);
+    await rachaService.remove(req.params.id, req.auth!.quadraId!);
     res.status(204).send();
   }),
 );

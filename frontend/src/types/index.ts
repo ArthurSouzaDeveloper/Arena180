@@ -8,6 +8,17 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  role: "OWNER" | "SUPERADMIN";
+}
+
+export interface Arena {
+  id: string;
+  name: string;
+  slug: string;
+  active: boolean;
+  createdAt: string;
+  users: { id: string; name: string; email: string }[];
+  _count: { courts: number; rachas: number };
 }
 
 export interface Product {

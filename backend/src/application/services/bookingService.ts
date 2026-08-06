@@ -15,7 +15,7 @@ interface CreateBookingInput {
 
 async function findQuadraBySlug(slug: string) {
   const quadra = await prisma.quadra.findUnique({ where: { slug } });
-  if (!quadra) {
+  if (!quadra || !quadra.active) {
     throw new NotFoundError("Estabelecimento não encontrado");
   }
   return quadra;
