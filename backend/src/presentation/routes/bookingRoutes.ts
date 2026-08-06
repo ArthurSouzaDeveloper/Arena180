@@ -1,0 +1,44 @@
+import { Router } from "express";
+import { z } from "zod";
+import { bookingService } from "../../application/services/bookingService";
+import { asyncHandler } from "../middlewares/errorHandler";
+
+const router = Router();
+
+const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida");
+
+const createSchema = z.object({
+  date: dateSchema,
+  startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Horário inválido"),
+  withExtraBlock: z.boolean().optional(),
+  customerName: z.string().min(1),
+  customerPhone: z.string().min(1),
+});
+
+router.get(
+  "/:quadraSlug/courts",
+  asyncHandler(async (req, res) => {
+    const courts = await bookingService.listCourts(req.params.quadraSlug);
+    res.json(courts);
+  }),
+);
+
+router.get(
+  "/:quadraSlug/courts/:courtId/availability",
+  asyncHandler(async (req, res) => {
+    const date = dateSchema.parse(req.query.date);
+    const availability = await bookingService.availability(req.params.quadraSlug, req.params.courtId, date);
+    res.json(availability);
+  }),
+);
+
+router.post(
+  "/:quadraSlug/courts/:courtId",
+  asyncHandler(async (req, res) => {
+    const data = createSchema.parse(req.body);
+    const booking = await bookingService.create(req.params.quadraSlug, req.params.courtId, data);
+    res.status(201).json(booking);
+  }),
+);
+
+export default router;

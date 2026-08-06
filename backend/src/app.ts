@@ -7,6 +7,8 @@ import authRoutes from "./presentation/routes/authRoutes";
 import productRoutes from "./presentation/routes/productRoutes";
 import rachaRoutes from "./presentation/routes/rachaRoutes";
 import dashboardRoutes from "./presentation/routes/dashboardRoutes";
+import courtRoutes from "./presentation/routes/courtRoutes";
+import bookingRoutes from "./presentation/routes/bookingRoutes";
 
 export function createApp() {
   const app = express();
@@ -21,6 +23,8 @@ export function createApp() {
   app.use("/api/products", productRoutes);
   app.use("/api/rachas", rachaRoutes);
   app.use("/api/dashboard", dashboardRoutes);
+  app.use("/api/courts", courtRoutes);
+  app.use("/api/booking", bookingRoutes);
 
   app.use(errorHandler);
 

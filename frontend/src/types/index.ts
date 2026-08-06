@@ -42,3 +42,53 @@ export interface DashboardSummary {
   revenueMonth: number;
   totalRachas: number;
 }
+
+export interface CourtHours {
+  id: string;
+  weekday: number;
+  openTime: string;
+  closeTime: string;
+  closed: boolean;
+}
+
+export interface CourtBlock {
+  id: string;
+  date: string;
+  startTime: string | null;
+  endTime: string | null;
+  reason: string | null;
+}
+
+export interface Court {
+  id: string;
+  name: string;
+  hourlyRate: string;
+  extraBlockMinutes: number;
+  extraBlockPrice: string | null;
+  active: boolean;
+  hours: CourtHours[];
+  blocks: CourtBlock[];
+}
+
+export interface AvailabilitySlot {
+  startTime: string;
+  endTime: string;
+  available: boolean;
+}
+
+export interface Availability {
+  open: boolean;
+  reason?: string;
+  hourlyRate?: string;
+  extraBlockMinutes?: number;
+  extraBlockPrice?: string | null;
+  slots: AvailabilitySlot[];
+}
+
+export interface PublicCourt {
+  id: string;
+  name: string;
+  hourlyRate: string;
+  extraBlockMinutes: number;
+  extraBlockPrice: string | null;
+}
