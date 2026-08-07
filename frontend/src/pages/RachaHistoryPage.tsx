@@ -16,8 +16,8 @@ export function RachaHistoryPage() {
     <div>
       <h1 className="mb-6 text-xl font-bold">Histórico de rachas</h1>
 
-      <div className="overflow-hidden rounded-lg border bg-white">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-lg border bg-white">
+        <table className="w-full min-w-[480px] text-sm">
           <thead className="bg-gray-50 text-left text-gray-500">
             <tr>
               <th className="px-4 py-2">Data</th>

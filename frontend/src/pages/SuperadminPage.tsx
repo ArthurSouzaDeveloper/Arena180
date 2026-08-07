@@ -154,8 +154,8 @@ export function SuperadminPage() {
           </button>
         </form>
 
-        <div className="overflow-hidden rounded-lg border bg-white">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-lg border bg-white">
+          <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="bg-gray-50 text-xs uppercase text-gray-500">
               <tr>
                 <th className="px-4 py-2">Arena</th>
