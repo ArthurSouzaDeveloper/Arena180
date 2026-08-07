@@ -90,14 +90,23 @@ jobs:
             set -e
             cd /opt/gestquadra
 
+            exec_in_backend() {
+              for i in $(seq 1 20); do
+                if docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T backend sh -c "$1"; then
+                  return 0
+                fi
+                echo "backend not ready yet, retrying in 3s ($i/20)..."
+                sleep 3
+              done
+              return 1
+            }
+
             if [ -n "$SUPERADMIN_EMAIL" ]; then
-              docker compose -f docker-compose.prod.yml exec -T backend sh -c \
-                "SUPERADMIN_NAME='$SUPERADMIN_NAME' SUPERADMIN_EMAIL='$SUPERADMIN_EMAIL' SUPERADMIN_PASSWORD='$SUPERADMIN_PASSWORD' node dist/scripts/create-superadmin.js"
+              exec_in_backend "SUPERADMIN_NAME='$SUPERADMIN_NAME' SUPERADMIN_EMAIL='$SUPERADMIN_EMAIL' SUPERADMIN_PASSWORD='$SUPERADMIN_PASSWORD' node dist/scripts/create-superadmin.js"
             fi
 
             if [ -n "$ARENA_SLUG" ]; then
-              docker compose -f docker-compose.prod.yml exec -T backend sh -c \
-                "QUADRA_NAME='$ARENA_NAME' QUADRA_SLUG='$ARENA_SLUG' ADMIN_NAME='$ARENA_ADMIN_NAME' ADMIN_EMAIL='$ARENA_ADMIN_EMAIL' ADMIN_PASSWORD='$ARENA_ADMIN_PASSWORD' node dist/scripts/create-quadra.js"
+              exec_in_backend "QUADRA_NAME='$ARENA_NAME' QUADRA_SLUG='$ARENA_SLUG' ADMIN_NAME='$ARENA_ADMIN_NAME' ADMIN_EMAIL='$ARENA_ADMIN_EMAIL' ADMIN_PASSWORD='$ARENA_ADMIN_PASSWORD' node dist/scripts/create-quadra.js"
             fi
         env:
           SUPERADMIN_NAME: ${{ inputs.superadmin_name }}
