@@ -119,4 +119,6 @@ export interface Booking {
 
 export interface BookingWithCourt extends Booking {
   court: { name: string };
+  cancellable: boolean;
+  cancelMinHoursBefore: number;
 }

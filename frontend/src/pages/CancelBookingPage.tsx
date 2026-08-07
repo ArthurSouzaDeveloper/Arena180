@@ -63,7 +63,9 @@ export function CancelBookingPage() {
             <p className="text-gray-600">Status: {booking.status === "CONFIRMADA" ? "Confirmada" : "Cancelada"}</p>
           </div>
 
-          {booking.status === "CONFIRMADA" ? (
+          {booking.status !== "CONFIRMADA" ? (
+            <p className="text-gray-500">Essa reserva já está cancelada.</p>
+          ) : booking.cancellable ? (
             <button
               onClick={handleCancel}
               disabled={cancelling}
@@ -72,7 +74,10 @@ export function CancelBookingPage() {
               Confirmar cancelamento
             </button>
           ) : (
-            <p className="text-gray-500">Essa reserva já está cancelada.</p>
+            <p className="rounded bg-amber-50 px-3 py-2 text-amber-700">
+              O cancelamento só pode ser feito até {booking.cancelMinHoursBefore}h antes do horário reservado. Entre
+              em contato diretamente com a quadra se precisar cancelar agora.
+            </p>
           )}
         </div>
       )}

@@ -4,6 +4,7 @@ import { AppError, ConflictError, NotFoundError } from "../../domain/errors";
 import { addMinutes, overlaps } from "../../domain/time";
 
 const SLOT_MINUTES = 60;
+const CANCEL_MIN_HOURS_BEFORE = 24;
 
 interface CreateBookingInput {
   date: string;
@@ -43,6 +44,11 @@ async function findBookingByToken(quadraSlug: string, bookingId: string, token: 
     throw new NotFoundError("Reserva não encontrada");
   }
   return booking;
+}
+
+function hoursUntilStart(booking: { date: Date; startTime: string }) {
+  const startsAt = new Date(`${booking.date.toISOString().slice(0, 10)}T${booking.startTime}:00`);
+  return (startsAt.getTime() - Date.now()) / (1000 * 60 * 60);
 }
 
 export const bookingService = {
@@ -182,7 +188,9 @@ export const bookingService = {
   },
 
   async getByToken(quadraSlug: string, bookingId: string, token: string) {
-    return findBookingByToken(quadraSlug, bookingId, token);
+    const booking = await findBookingByToken(quadraSlug, bookingId, token);
+    const cancellable = booking.status === "CONFIRMADA" && hoursUntilStart(booking) >= CANCEL_MIN_HOURS_BEFORE;
+    return { ...booking, cancellable, cancelMinHoursBefore: CANCEL_MIN_HOURS_BEFORE };
   },
 
   async cancelByToken(quadraSlug: string, bookingId: string, token: string) {
@@ -192,9 +200,10 @@ export const bookingService = {
       throw new AppError("Essa reserva já está cancelada");
     }
 
-    const startsAt = new Date(`${booking.date.toISOString().slice(0, 10)}T${booking.startTime}:00`);
-    if (startsAt.getTime() < Date.now()) {
-      throw new AppError("Não é possível cancelar uma reserva que já passou");
+    if (hoursUntilStart(booking) < CANCEL_MIN_HOURS_BEFORE) {
+      throw new AppError(
+        `O cancelamento só pode ser feito até ${CANCEL_MIN_HOURS_BEFORE}h antes do horário reservado`,
+      );
     }
 
     return prisma.booking.update({ where: { id: booking.id }, data: { status: "CANCELADA" } });
