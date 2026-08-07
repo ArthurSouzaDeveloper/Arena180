@@ -1,0 +1,63 @@
+name: Seed production data
+
+on:
+  workflow_dispatch:
+    inputs:
+      superadmin_name:
+        description: "Nome do superadmin (deixe em branco para pular)"
+        required: false
+      superadmin_email:
+        description: "E-mail do superadmin"
+        required: false
+      superadmin_password:
+        description: "Senha do superadmin"
+        required: false
+      arena_name:
+        description: "Nome da arena (deixe em branco para pular)"
+        required: false
+      arena_slug:
+        description: "Slug da arena"
+        required: false
+      arena_admin_name:
+        description: "Nome do admin da arena"
+        required: false
+      arena_admin_email:
+        description: "E-mail do admin da arena"
+        required: false
+      arena_admin_password:
+        description: "Senha do admin da arena"
+        required: false
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run seed commands on server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          envs: SUPERADMIN_NAME,SUPERADMIN_EMAIL,SUPERADMIN_PASSWORD,ARENA_NAME,ARENA_SLUG,ARENA_ADMIN_NAME,ARENA_ADMIN_EMAIL,ARENA_ADMIN_PASSWORD
+          script: |
+            set -e
+            cd /opt/gestquadra
+
+            if [ -n "$SUPERADMIN_EMAIL" ]; then
+              docker compose -f docker-compose.prod.yml exec -T backend sh -c \
+                "SUPERADMIN_NAME='$SUPERADMIN_NAME' SUPERADMIN_EMAIL='$SUPERADMIN_EMAIL' SUPERADMIN_PASSWORD='$SUPERADMIN_PASSWORD' node dist/scripts/create-superadmin.js"
+            fi
+
+            if [ -n "$ARENA_SLUG" ]; then
+              docker compose -f docker-compose.prod.yml exec -T backend sh -c \
+                "QUADRA_NAME='$ARENA_NAME' QUADRA_SLUG='$ARENA_SLUG' ADMIN_NAME='$ARENA_ADMIN_NAME' ADMIN_EMAIL='$ARENA_ADMIN_EMAIL' ADMIN_PASSWORD='$ARENA_ADMIN_PASSWORD' node dist/scripts/create-quadra.js"
+            fi
+        env:
+          SUPERADMIN_NAME: ${{ inputs.superadmin_name }}
+          SUPERADMIN_EMAIL: ${{ inputs.superadmin_email }}
+          SUPERADMIN_PASSWORD: ${{ inputs.superadmin_password }}
+          ARENA_NAME: ${{ inputs.arena_name }}
+          ARENA_SLUG: ${{ inputs.arena_slug }}
+          ARENA_ADMIN_NAME: ${{ inputs.arena_admin_name }}
+          ARENA_ADMIN_EMAIL: ${{ inputs.arena_admin_email }}
+          ARENA_ADMIN_PASSWORD: ${{ inputs.arena_admin_password }}
