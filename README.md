@@ -51,6 +51,32 @@ docker compose exec backend sh -c \
   "QUADRA_NAME='Arena Cillos' QUADRA_SLUG='arena-cillos' ADMIN_NAME='Fulano' ADMIN_EMAIL='dono@arenacillos.com.br' ADMIN_PASSWORD='senha123' node dist/scripts/create-quadra.js"
 ```
 
+## Deploy em produção (VPS via GitHub Actions)
+
+O deploy é feito pelo workflow `.github/workflows/deploy.yml`, que copia o
+projeto para o servidor via SSH e sobe os containers com
+`docker-compose.prod.yml`.
+
+1. No GitHub, vá em **Settings → Secrets and variables → Actions** do
+   repositório e cadastre:
+   - `VPS_HOST` — IP ou hostname do servidor
+   - `VPS_USER` — usuário SSH (ex: `root`)
+   - `VPS_PASSWORD` — senha SSH desse usuário
+   - `POSTGRES_PASSWORD` — senha do Postgres em produção
+   - `JWT_SECRET` — segredo longo e aleatório para assinar os tokens
+   - `PUBLIC_ORIGIN` — origem pública do frontend, ex: `http://SEU_IP`
+   - `API_ORIGIN` — origem pública da API, ex: `http://SEU_IP:4000`
+2. Dispare o workflow: qualquer push na branch de deploy roda
+   automaticamente, ou dispare manualmente em **Actions → Deploy to VPS →
+   Run workflow**.
+3. Após o primeiro deploy, crie o superadmin e a primeira arena dentro do
+   container do backend:
+
+   ```bash
+   docker compose -f docker-compose.prod.yml exec backend sh -c \
+     "SUPERADMIN_NAME='Nome' SUPERADMIN_EMAIL='voce@exemplo.com' SUPERADMIN_PASSWORD='senha-forte' node dist/scripts/create-superadmin.js"
+   ```
+
 ## Rodando localmente (dev)
 
 ### Backend

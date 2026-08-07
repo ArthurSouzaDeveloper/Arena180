@@ -1,0 +1,54 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - claude/gestquadra-management-system-qh3piz
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy project files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          source: "backend,frontend,docker-compose.prod.yml"
+          target: "/opt/gestquadra"
+          strip_components: 0
+
+      - name: Install Docker, write env file and deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          envs: POSTGRES_PASSWORD,JWT_SECRET,PUBLIC_ORIGIN,API_ORIGIN
+          script: |
+            set -e
+
+            if ! command -v docker >/dev/null 2>&1; then
+              curl -fsSL https://get.docker.com | sh
+            fi
+
+            cat > /opt/gestquadra/.env.prod <<EOF
+            POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            JWT_SECRET=${JWT_SECRET}
+            PUBLIC_ORIGIN=${PUBLIC_ORIGIN}
+            API_ORIGIN=${API_ORIGIN}
+            EOF
+
+            cd /opt/gestquadra
+            docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+            docker image prune -f
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          PUBLIC_ORIGIN: ${{ secrets.PUBLIC_ORIGIN }}
+          API_ORIGIN: ${{ secrets.API_ORIGIN }}
