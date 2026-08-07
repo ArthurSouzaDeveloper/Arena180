@@ -30,6 +30,9 @@ on:
       arena_admin_password:
         description: "Senha do admin da arena"
         required: false
+      list_arenas:
+        description: "Listar todas as arenas e e-mails de admin (true para listar)"
+        required: false
 
 jobs:
   deploy:
@@ -121,3 +124,38 @@ jobs:
           ARENA_ADMIN_NAME: ${{ inputs.arena_admin_name }}
           ARENA_ADMIN_EMAIL: ${{ inputs.arena_admin_email }}
           ARENA_ADMIN_PASSWORD: ${{ inputs.arena_admin_password }}
+
+      - name: List arenas (manual dispatch only)
+        if: ${{ inputs.list_arenas == 'true' }}
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            set -e
+            cd /opt/gestquadra
+            docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T backend node -e "
+              const { PrismaClient } = require('@prisma/client');
+              const prisma = new PrismaClient();
+              (async () => {
+                const arenas = await prisma.quadra.findMany({
+                  include: { users: { select: { name: true, email: true, role: true } } },
+                  orderBy: { createdAt: 'desc' },
+                });
+                for (const a of arenas) {
+                  console.log('---');
+                  console.log('Arena:', a.name, '| slug:', a.slug, '| ativa:', a.active);
+                  for (const u of a.users) {
+                    console.log('  admin:', u.name, '<' + u.email + '>');
+                  }
+                }
+                const superadmins = await prisma.user.findMany({ where: { role: 'SUPERADMIN' }, select: { name: true, email: true } });
+                console.log('---');
+                console.log('Superadmins:');
+                for (const s of superadmins) {
+                  console.log('  ', s.name, '<' + s.email + '>');
+                }
+                await prisma.\$disconnect();
+              })();
+            "
