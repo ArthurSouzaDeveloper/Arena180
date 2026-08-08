@@ -9,6 +9,7 @@ export function CourtsPage() {
   const [courts, setCourts] = useState<Court[]>([]);
   const [name, setName] = useState("");
   const [hourlyRate, setHourlyRate] = useState("");
+  const [slotMinutes, setSlotMinutes] = useState("60");
   const [extraBlockMinutes, setExtraBlockMinutes] = useState("");
   const [extraBlockPrice, setExtraBlockPrice] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -28,11 +29,13 @@ export function CourtsPage() {
       await api.post("/courts", {
         name,
         hourlyRate: Number(hourlyRate),
+        slotMinutes: slotMinutes ? Number(slotMinutes) : undefined,
         extraBlockMinutes: extraBlockMinutes ? Number(extraBlockMinutes) : undefined,
         extraBlockPrice: extraBlockPrice ? Number(extraBlockPrice) : undefined,
       });
       setName("");
       setHourlyRate("");
+      setSlotMinutes("60");
       setExtraBlockMinutes("");
       setExtraBlockPrice("");
       loadCourts();
@@ -74,6 +77,18 @@ export function CourtsPage() {
             step="0.01"
             value={hourlyRate}
             onChange={(e) => setHourlyRate(e.target.value)}
+            className="w-28 rounded border border-gray-300 px-3 py-2 text-sm"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Duração do horário (min)</label>
+          <input
+            required
+            type="number"
+            min="5"
+            max="480"
+            value={slotMinutes}
+            onChange={(e) => setSlotMinutes(e.target.value)}
             className="w-28 rounded border border-gray-300 px-3 py-2 text-sm"
           />
         </div>
@@ -140,6 +155,8 @@ function CourtCard({
     }),
   );
   const [savingHours, setSavingHours] = useState(false);
+  const [slotMinutes, setSlotMinutes] = useState(String(court.slotMinutes));
+  const [savingSlotMinutes, setSavingSlotMinutes] = useState(false);
   const [blockDate, setBlockDate] = useState("");
   const [blockStart, setBlockStart] = useState("");
   const [blockEnd, setBlockEnd] = useState("");
@@ -175,6 +192,16 @@ function CourtCard({
       })));
     } finally {
       setSavingHours(false);
+    }
+  }
+
+  async function saveSlotMinutes() {
+    setSavingSlotMinutes(true);
+    try {
+      await api.put(`/courts/${court.id}`, { slotMinutes: Number(slotMinutes) });
+      onChanged();
+    } finally {
+      setSavingSlotMinutes(false);
     }
   }
 
@@ -216,6 +243,28 @@ function CourtCard({
           </button>
           <button onClick={onDelete} className="rounded bg-red-50 px-3 py-1 text-red-600 hover:bg-red-100">
             Excluir
+          </button>
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <p className="mb-2 text-sm font-medium text-gray-700">Duração padrão do horário oferecido ao cliente</p>
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <input
+            type="number"
+            min="5"
+            max="480"
+            value={slotMinutes}
+            onChange={(e) => setSlotMinutes(e.target.value)}
+            className="w-24 rounded border border-gray-300 px-2 py-1"
+          />
+          <span className="text-gray-500">minutos (ex: 65 = 1h05)</span>
+          <button
+            onClick={saveSlotMinutes}
+            disabled={savingSlotMinutes}
+            className="rounded bg-gray-100 px-3 py-1.5 font-semibold hover:bg-gray-200 disabled:opacity-50"
+          >
+            Salvar duração
           </button>
         </div>
       </div>

@@ -8,6 +8,7 @@ interface CreateCourtInput {
   quadraId: string;
   name: string;
   hourlyRate: number;
+  slotMinutes?: number;
   extraBlockMinutes?: number;
   extraBlockPrice?: number;
 }
@@ -15,6 +16,7 @@ interface CreateCourtInput {
 interface UpdateCourtInput {
   name?: string;
   hourlyRate?: number;
+  slotMinutes?: number;
   extraBlockMinutes?: number;
   extraBlockPrice?: number;
   active?: boolean;
@@ -42,6 +44,12 @@ function assertValidTime(value: string, field: string) {
   }
 }
 
+function assertValidSlotMinutes(value: number) {
+  if (!Number.isInteger(value) || value < 5 || value > 480) {
+    throw new AppError("Duração do horário deve ser um número inteiro de minutos entre 5 e 480");
+  }
+}
+
 async function assertOwnership(id: string, quadraId: string) {
   const court = await prisma.court.findFirst({ where: { id, quadraId } });
   if (!court) {
@@ -62,12 +70,15 @@ export const courtService = {
     });
   },
 
-  async create({ quadraId, name, hourlyRate, extraBlockMinutes, extraBlockPrice }: CreateCourtInput) {
+  async create({ quadraId, name, hourlyRate, slotMinutes, extraBlockMinutes, extraBlockPrice }: CreateCourtInput) {
+    if (slotMinutes !== undefined) assertValidSlotMinutes(slotMinutes);
+
     return prisma.court.create({
       data: {
         quadraId,
         name,
         hourlyRate,
+        slotMinutes: slotMinutes ?? 60,
         extraBlockMinutes: extraBlockMinutes ?? 0,
         extraBlockPrice,
         hours: {
@@ -85,6 +96,7 @@ export const courtService = {
 
   async update(id: string, quadraId: string, data: UpdateCourtInput) {
     await assertOwnership(id, quadraId);
+    if (data.slotMinutes !== undefined) assertValidSlotMinutes(data.slotMinutes);
     return prisma.court.update({ where: { id }, data });
   },
 

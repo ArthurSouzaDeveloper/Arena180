@@ -3,7 +3,6 @@ import { prisma } from "../../config/database";
 import { AppError, ConflictError, NotFoundError } from "../../domain/errors";
 import { addMinutes, overlaps } from "../../domain/time";
 
-const SLOT_MINUTES = 60;
 const CANCEL_MIN_HOURS_BEFORE = 24;
 
 interface CreateBookingInput {
@@ -61,6 +60,7 @@ export const bookingService = {
         id: true,
         name: true,
         hourlyRate: true,
+        slotMinutes: true,
         extraBlockMinutes: true,
         extraBlockPrice: true,
       },
@@ -97,7 +97,7 @@ export const bookingService = {
     const slots: { startTime: string; endTime: string; available: boolean }[] = [];
     let cursor = hours.openTime;
     while (cursor < hours.closeTime) {
-      const end = addMinutes(cursor, SLOT_MINUTES);
+      const end = addMinutes(cursor, court.slotMinutes);
       if (end > hours.closeTime) break;
 
       const blocked = partialBlocks.some((b) => overlaps(cursor, end, b.startTime!, b.endTime!));
@@ -109,6 +109,7 @@ export const bookingService = {
     return {
       open: true,
       hourlyRate: court.hourlyRate,
+      slotMinutes: court.slotMinutes,
       extraBlockMinutes: court.extraBlockMinutes,
       extraBlockPrice: court.extraBlockPrice,
       slots,
@@ -128,7 +129,7 @@ export const bookingService = {
     }
 
     const withExtraBlock = Boolean(input.withExtraBlock && court.extraBlockMinutes > 0);
-    const duration = SLOT_MINUTES + (withExtraBlock ? court.extraBlockMinutes : 0);
+    const duration = court.slotMinutes + (withExtraBlock ? court.extraBlockMinutes : 0);
     const endTime = addMinutes(input.startTime, duration);
 
     if (input.startTime < hours.openTime || endTime <= input.startTime || endTime > hours.closeTime) {

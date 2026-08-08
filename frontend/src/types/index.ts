@@ -74,6 +74,7 @@ export interface Court {
   id: string;
   name: string;
   hourlyRate: string;
+  slotMinutes: number;
   extraBlockMinutes: number;
   extraBlockPrice: string | null;
   active: boolean;
@@ -91,6 +92,7 @@ export interface Availability {
   open: boolean;
   reason?: string;
   hourlyRate?: string;
+  slotMinutes?: number;
   extraBlockMinutes?: number;
   extraBlockPrice?: string | null;
   slots: AvailabilitySlot[];
@@ -100,6 +102,7 @@ export interface PublicCourt {
   id: string;
   name: string;
   hourlyRate: string;
+  slotMinutes: number;
   extraBlockMinutes: number;
   extraBlockPrice: string | null;
 }

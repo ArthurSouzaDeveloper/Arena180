@@ -13,6 +13,7 @@ router.use(ownerMiddleware);
 const createSchema = z.object({
   name: z.string().min(1),
   hourlyRate: z.coerce.number().positive(),
+  slotMinutes: z.coerce.number().int().min(5).max(480).optional(),
   extraBlockMinutes: z.coerce.number().int().min(0).optional(),
   extraBlockPrice: z.coerce.number().min(0).optional(),
 });
@@ -20,6 +21,7 @@ const createSchema = z.object({
 const updateSchema = z.object({
   name: z.string().min(1).optional(),
   hourlyRate: z.coerce.number().positive().optional(),
+  slotMinutes: z.coerce.number().int().min(5).max(480).optional(),
   extraBlockMinutes: z.coerce.number().int().min(0).optional(),
   extraBlockPrice: z.coerce.number().min(0).optional(),
   active: z.boolean().optional(),

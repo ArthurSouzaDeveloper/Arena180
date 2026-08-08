@@ -101,6 +101,7 @@ model Court {
   name              String
   quadraId          String   @map("quadra_id")
   hourlyRate        Decimal  @map("hourly_rate") @db.Decimal(10, 2)
+  slotMinutes       Int      @default(60) @map("slot_minutes")
   extraBlockMinutes Int      @default(0) @map("extra_block_minutes")
   extraBlockPrice   Decimal? @map("extra_block_price") @db.Decimal(10, 2)
   active            Boolean  @default(true)
