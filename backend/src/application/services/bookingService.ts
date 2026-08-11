@@ -53,7 +53,7 @@ function hoursUntilStart(booking: { date: Date; startTime: string }) {
 export const bookingService = {
   async listCourts(quadraSlug: string) {
     const quadra = await findQuadraBySlug(quadraSlug);
-    return prisma.court.findMany({
+    const courts = await prisma.court.findMany({
       where: { quadraId: quadra.id, active: true },
       orderBy: { name: "asc" },
       select: {
@@ -65,6 +65,7 @@ export const bookingService = {
         extraBlockPrice: true,
       },
     });
+    return { arenaName: quadra.name, courts };
   },
 
   async availability(quadraSlug: string, courtId: string, date: string) {

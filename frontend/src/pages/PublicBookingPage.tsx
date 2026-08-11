@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../lib/api";
 import { Availability, Booking, PublicCourt } from "../types";
+import "../styles/publicBooking.css";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -9,8 +10,18 @@ function todayIso() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function formatDuration(minutes?: number) {
+  if (!minutes) return "";
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours === 0) return `${mins}min`;
+  if (mins === 0) return `${hours}h`;
+  return `${hours}h${String(mins).padStart(2, "0")}`;
+}
+
 export function PublicBookingPage() {
   const { slug } = useParams<{ slug: string }>();
+  const [arenaName, setArenaName] = useState<string | null>(null);
   const [courts, setCourts] = useState<PublicCourt[]>([]);
   const [courtId, setCourtId] = useState("");
   const [date, setDate] = useState(todayIso());
@@ -28,8 +39,9 @@ export function PublicBookingPage() {
   useEffect(() => {
     if (!slug) return;
     api.get(`/booking/${slug}/courts`).then((res) => {
-      setCourts(res.data);
-      if (res.data.length > 0) setCourtId(res.data[0].id);
+      setArenaName(res.data.arenaName);
+      setCourts(res.data.courts);
+      if (res.data.courts.length > 0) setCourtId(res.data.courts[0].id);
     });
   }, [slug]);
 
@@ -51,6 +63,11 @@ export function PublicBookingPage() {
     const extra = withExtraBlock ? Number(availability.extraBlockPrice ?? 0) : 0;
     return base + extra;
   }, [availability, withExtraBlock]);
+
+  const selectedSlotEnd = useMemo(
+    () => availability?.slots.find((s) => s.startTime === selectedSlot)?.endTime,
+    [availability, selectedSlot],
+  );
 
   async function handleSubmit() {
     if (!slug || !courtId || !selectedSlot) return;
@@ -81,142 +98,154 @@ export function PublicBookingPage() {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-2xl px-4 py-8">
-      <h1 className="mb-1 text-2xl font-bold text-primary-700">Agendar horário</h1>
-      <p className="mb-6 text-sm text-gray-500">Escolha a quadra, a data e o horário disponível.</p>
+    <div className="pb-page">
+      <div className="pb-wrap">
+        <header className="pb-header">
+          <p className="pb-eyebrow">Agendamento</p>
+          <h1 className="pb-title">{arenaName ?? " "}</h1>
+          <div className="pb-rule" />
+          <p className="pb-subtitle">Reserve seu horário em menos de um minuto.</p>
+        </header>
 
-      {courts.length === 0 && <p className="text-sm text-gray-500">Nenhuma quadra disponível para agendamento.</p>}
+        {courts.length === 0 && <p className="pb-empty">Nenhuma quadra disponível para agendamento.</p>}
 
-      {courts.length > 0 && (
-        <div className="space-y-6">
-          <div className="flex flex-wrap gap-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Quadra</label>
-              <select
-                value={courtId}
-                onChange={(e) => setCourtId(e.target.value)}
-                className="rounded border border-gray-300 px-3 py-2 text-sm"
-              >
-                {courts.map((court) => (
-                  <option key={court.id} value={court.id}>
-                    {court.name}
-                  </option>
-                ))}
-              </select>
+        {courts.length > 0 && (
+          <>
+            <div className="pb-field-group">
+              <div className="pb-field">
+                <label htmlFor="courtSelect">Quadra</label>
+                <select id="courtSelect" value={courtId} onChange={(e) => setCourtId(e.target.value)}>
+                  {courts.map((court) => (
+                    <option key={court.id} value={court.id}>
+                      {court.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="pb-field">
+                <label htmlFor="dateInput">Data</label>
+                <input
+                  id="dateInput"
+                  type="date"
+                  min={todayIso()}
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+              </div>
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Data</label>
-              <input
-                type="date"
-                min={todayIso()}
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="rounded border border-gray-300 px-3 py-2 text-sm"
-              />
-            </div>
-          </div>
 
-          {confirmedBooking && (
-            <div className="rounded-lg border border-primary-200 bg-primary-50 p-4 text-sm">
-              <p className="mb-1 font-semibold text-primary-700">{success}</p>
-              <p className="text-gray-600">
-                {new Date(`${confirmedBooking.date.slice(0, 10)}T00:00:00`).toLocaleDateString("pt-BR")} ·{" "}
-                {confirmedBooking.startTime}–{confirmedBooking.endTime}
+            {confirmedBooking && (
+              <div className="pb-confirm-card">
+                <p className="pb-confirm-title">{success}</p>
+                <p>
+                  {new Date(`${confirmedBooking.date.slice(0, 10)}T00:00:00`).toLocaleDateString("pt-BR")} ·{" "}
+                  {confirmedBooking.startTime}–{confirmedBooking.endTime}
+                </p>
+                <p>
+                  Guarde este link para cancelar sua reserva se precisar:{" "}
+                  <Link to={`/agendar/${slug}/cancelar/${confirmedBooking.id}?token=${confirmedBooking.cancelToken}`}>
+                    Cancelar esta reserva
+                  </Link>
+                </p>
+              </div>
+            )}
+
+            {loadingAvailability && <p className="pb-alert-loading">Carregando horários...</p>}
+
+            {!loadingAvailability && availability && !availability.open && (
+              <p className="pb-alert pb-alert-warn">
+                Quadra fechada nessa data{availability.reason ? ` (${availability.reason})` : ""}.
               </p>
-              <p className="mt-2">
-                Guarde este link para cancelar sua reserva se precisar:{" "}
-                <Link
-                  to={`/agendar/${slug}/cancelar/${confirmedBooking.id}?token=${confirmedBooking.cancelToken}`}
-                  className="font-semibold text-primary-700 underline"
+            )}
+
+            {!loadingAvailability && availability?.open && (
+              <div className="pb-section">
+                <div className="pb-section-head">
+                  <h2>Horários disponíveis</h2>
+                  {availability.hourlyRate && (
+                    <span className="pb-price">{currencyFormatter.format(Number(availability.hourlyRate))} / sessão</span>
+                  )}
+                </div>
+                {availability.slotMinutes && (
+                  <p className="pb-duration-note">
+                    Cada sessão dura <strong>{formatDuration(availability.slotMinutes)}</strong>.
+                  </p>
+                )}
+                <div className="pb-slots">
+                  {availability.slots.map((slot) => (
+                    <button
+                      key={slot.startTime}
+                      disabled={!slot.available}
+                      onClick={() => setSelectedSlot(slot.startTime)}
+                      className={`pb-slot ${selectedSlot === slot.startTime ? "pb-slot-selected" : ""}`}
+                    >
+                      {slot.startTime}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {selectedSlot && selectedCourt && (
+              <div className="pb-order-card">
+                {Number(selectedCourt.extraBlockMinutes) > 0 && (
+                  <label className="pb-checkbox-row">
+                    <input
+                      type="checkbox"
+                      checked={withExtraBlock}
+                      onChange={(e) => setWithExtraBlock(e.target.checked)}
+                    />
+                    <span>
+                      Adicionar bloco extra de {selectedCourt.extraBlockMinutes} min por{" "}
+                      {currencyFormatter.format(Number(selectedCourt.extraBlockPrice ?? 0))}
+                    </span>
+                  </label>
+                )}
+
+                <div className="pb-summary">
+                  <span className="pb-summary-label">
+                    {selectedSlot}
+                    {selectedSlotEnd ? `–${selectedSlotEnd}` : ""}
+                  </span>
+                  <span className="pb-summary-value">{currencyFormatter.format(totalPrice)}</span>
+                </div>
+
+                <div className="pb-customer-fields">
+                  <div>
+                    <label htmlFor="customerName">Seu nome</label>
+                    <input
+                      id="customerName"
+                      required
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="customerPhone">Telefone</label>
+                    <input
+                      id="customerPhone"
+                      required
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {error && <p className="pb-error">{error}</p>}
+
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting || !customerName || !customerPhone}
+                  className="pb-cta"
                 >
-                  Cancelar esta reserva
-                </Link>
-              </p>
-            </div>
-          )}
-
-          {loadingAvailability && <p className="text-sm text-gray-500">Carregando horários...</p>}
-
-          {!loadingAvailability && availability && !availability.open && (
-            <p className="rounded bg-amber-50 px-3 py-2 text-sm text-amber-700">
-              Quadra fechada nessa data{availability.reason ? ` (${availability.reason})` : ""}.
-            </p>
-          )}
-
-          {!loadingAvailability && availability?.open && (
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-700">Horários disponíveis</p>
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                {availability.slots.map((slot) => (
-                  <button
-                    key={slot.startTime}
-                    disabled={!slot.available}
-                    onClick={() => setSelectedSlot(slot.startTime)}
-                    className={`rounded border px-2 py-2 text-sm ${
-                      !slot.available
-                        ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400 line-through"
-                        : selectedSlot === slot.startTime
-                          ? "border-primary-600 bg-primary-600 text-white"
-                          : "border-gray-300 hover:border-primary-500"
-                    }`}
-                  >
-                    {slot.startTime}
-                  </button>
-                ))}
+                  Confirmar reserva — {currencyFormatter.format(totalPrice)}
+                </button>
+                <p className="pb-foot-note">Sem necessidade de login</p>
               </div>
-            </div>
-          )}
-
-          {selectedSlot && selectedCourt && (
-            <div className="space-y-4 rounded-lg border bg-white p-4">
-              {Number(selectedCourt.extraBlockMinutes) > 0 && (
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={withExtraBlock}
-                    onChange={(e) => setWithExtraBlock(e.target.checked)}
-                  />
-                  Adicionar bloco extra de {selectedCourt.extraBlockMinutes} min por{" "}
-                  {currencyFormatter.format(Number(selectedCourt.extraBlockPrice ?? 0))}
-                </label>
-              )}
-
-              <p className="text-sm font-semibold">Total: {currencyFormatter.format(totalPrice)}</p>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Seu nome</label>
-                  <input
-                    required
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Telefone</label>
-                  <input
-                    required
-                    value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
-                  />
-                </div>
-              </div>
-
-              {error && <p className="text-sm text-red-600">{error}</p>}
-
-              <button
-                onClick={handleSubmit}
-                disabled={submitting || !customerName || !customerPhone}
-                className="rounded bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
-              >
-                Confirmar reserva
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

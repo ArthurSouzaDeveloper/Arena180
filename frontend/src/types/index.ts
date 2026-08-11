@@ -107,6 +107,11 @@ export interface PublicCourt {
   extraBlockPrice: string | null;
 }
 
+export interface PublicCourtsResponse {
+  arenaName: string;
+  courts: PublicCourt[];
+}
+
 export interface Booking {
   id: string;
   courtId: string;

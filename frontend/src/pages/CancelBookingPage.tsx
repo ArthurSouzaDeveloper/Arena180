@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
 import { BookingWithCourt } from "../types";
+import "../styles/publicBooking.css";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -44,49 +45,60 @@ export function CancelBookingPage() {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-md px-4 py-8">
-      <h1 className="mb-6 text-xl font-bold text-primary-700">Cancelar reserva</h1>
+    <div className="pb-page">
+      <div className="pb-wrap">
+        <header className="pb-header">
+          <p className="pb-eyebrow">Reserva</p>
+          <h1 className="pb-title">Cancelar reserva</h1>
+          <div className="pb-rule" />
+        </header>
 
-      {loading && <p className="text-sm text-gray-500">Carregando...</p>}
+        {loading && <p className="pb-loading">Carregando...</p>}
 
-      {!loading && error && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+        {!loading && error && !booking && <p className="pb-error">{error}</p>}
 
-      {!loading && booking && !cancelled && (
-        <div className="space-y-4 rounded-lg border bg-white p-4 text-sm">
-          <div>
-            <p className="font-semibold">{booking.court.name}</p>
-            <p className="text-gray-600">
+        {!loading && booking && !cancelled && (
+          <div className="pb-card">
+            <p className="pb-card-title">{booking.court.name}</p>
+            <p className="pb-card-meta">
               {new Date(`${booking.date.slice(0, 10)}T00:00:00`).toLocaleDateString("pt-BR")} · {booking.startTime}–
               {booking.endTime}
             </p>
-            <p className="text-gray-600">Total: {currencyFormatter.format(Number(booking.totalPrice))}</p>
-            <p className="text-gray-600">Status: {booking.status === "CONFIRMADA" ? "Confirmada" : "Cancelada"}</p>
-          </div>
-
-          {booking.status !== "CONFIRMADA" ? (
-            <p className="text-gray-500">Essa reserva já está cancelada.</p>
-          ) : booking.cancellable ? (
-            <button
-              onClick={handleCancel}
-              disabled={cancelling}
-              className="rounded bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-            >
-              Confirmar cancelamento
-            </button>
-          ) : (
-            <p className="rounded bg-amber-50 px-3 py-2 text-amber-700">
-              O cancelamento só pode ser feito até {booking.cancelMinHoursBefore}h antes do horário reservado. Entre
-              em contato diretamente com a quadra se precisar cancelar agora.
+            <p className="pb-card-meta">
+              Total: <strong>{currencyFormatter.format(Number(booking.totalPrice))}</strong>
             </p>
-          )}
-        </div>
-      )}
+            <span
+              className={`pb-status-pill ${
+                booking.status === "CONFIRMADA" ? "pb-status-confirmed" : "pb-status-cancelled"
+              }`}
+            >
+              {booking.status === "CONFIRMADA" ? "Confirmada" : "Cancelada"}
+            </span>
 
-      {cancelled && (
-        <p className="rounded bg-primary-50 px-3 py-2 text-sm text-primary-700">
-          Reserva cancelada com sucesso. O horário já está disponível para outras pessoas.
-        </p>
-      )}
+            <div className="pb-card-divider" />
+
+            {booking.status !== "CONFIRMADA" ? (
+              <p className="pb-note-muted">Essa reserva já está cancelada.</p>
+            ) : booking.cancellable ? (
+              <>
+                {error && <p className="pb-error">{error}</p>}
+                <button onClick={handleCancel} disabled={cancelling} className="pb-cta-danger">
+                  {cancelling ? "Cancelando..." : "Confirmar cancelamento"}
+                </button>
+              </>
+            ) : (
+              <p className="pb-alert pb-alert-warn">
+                O cancelamento só pode ser feito até {booking.cancelMinHoursBefore}h antes do horário reservado. Entre
+                em contato diretamente com a quadra se precisar cancelar agora.
+              </p>
+            )}
+          </div>
+        )}
+
+        {cancelled && (
+          <div className="pb-success-card">Reserva cancelada com sucesso. O horário já está disponível para outras pessoas.</div>
+        )}
+      </div>
     </div>
   );
 }
