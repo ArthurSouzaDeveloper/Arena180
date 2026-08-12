@@ -16,6 +16,7 @@ interface CreateBookingInput {
   withExtraBlock?: boolean;
   customerName: string;
   customerPhone: string;
+  paymentMode?: "DEPOSITO" | "INTEGRAL";
 }
 
 const ACTIVE_BOOKING_STATUSES: BookingStatus[] = ["CONFIRMADA", "PENDENTE_PAGAMENTO"];
@@ -92,7 +93,13 @@ export const bookingService = {
         extraBlockPrice: true,
       },
     });
-    return { arenaName: quadra.name, courts };
+    return {
+      arenaName: quadra.name,
+      courts,
+      pixEnabled: Boolean(quadra.mercadoPagoAccessToken),
+      allowDepositPayment: quadra.allowDepositPayment,
+      allowFullPayment: quadra.allowFullPayment,
+    };
   },
 
   async availability(quadraSlug: string, courtId: string, date: string) {
@@ -172,7 +179,24 @@ export const bookingService = {
     await expireStaleHolds(courtId, dateValue);
 
     const pixEnabled = Boolean(quadra.mercadoPagoAccessToken);
-    const depositAmount = pixEnabled ? Math.round(totalPrice * DEPOSIT_RATE * 100) / 100 : null;
+
+    let paymentMode: "DEPOSITO" | "INTEGRAL" | null = null;
+    if (pixEnabled) {
+      const requested = input.paymentMode ?? (quadra.allowDepositPayment ? "DEPOSITO" : "INTEGRAL");
+      if (requested === "DEPOSITO" && !quadra.allowDepositPayment) {
+        throw new AppError("Essa arena não aceita pagamento de sinal");
+      }
+      if (requested === "INTEGRAL" && !quadra.allowFullPayment) {
+        throw new AppError("Essa arena não aceita pagamento do valor integral");
+      }
+      paymentMode = requested;
+    }
+
+    const depositAmount = pixEnabled
+      ? paymentMode === "INTEGRAL"
+        ? totalPrice
+        : Math.round(totalPrice * DEPOSIT_RATE * 100) / 100
+      : null;
     const holdExpiresAt = pixEnabled ? new Date(Date.now() + PAYMENT_HOLD_MINUTES * 60 * 1000) : null;
 
     let booking;
@@ -213,6 +237,7 @@ export const bookingService = {
               totalPrice,
               status: pixEnabled ? "PENDENTE_PAGAMENTO" : "CONFIRMADA",
               depositAmount,
+              paymentMode,
               holdExpiresAt,
             },
           });
@@ -235,7 +260,7 @@ export const bookingService = {
       const payment = await mercadoPagoClient.createPixPayment({
         accessToken,
         amount: depositAmount!,
-        description: `Sinal de reserva ${court.name} - ${input.date} ${input.startTime}`,
+        description: `${paymentMode === "INTEGRAL" ? "Pagamento integral" : "Sinal"} da reserva ${court.name} - ${input.date} ${input.startTime}`,
         externalReference: booking.id,
         payerEmail: payerEmailFor(booking.id),
         notificationUrl: env.publicBaseUrl ? `${env.publicBaseUrl}/api/booking/${quadraSlug}/pix-webhook` : undefined,

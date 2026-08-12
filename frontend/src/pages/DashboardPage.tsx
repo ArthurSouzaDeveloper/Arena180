@@ -70,15 +70,23 @@ function BookingLinkCard() {
 
 function PixSettingsCard() {
   const [pixEnabled, setPixEnabled] = useState(false);
+  const [allowDepositPayment, setAllowDepositPayment] = useState(true);
+  const [allowFullPayment, setAllowFullPayment] = useState(false);
   const [loading, setLoading] = useState(true);
   const [accessToken, setAccessToken] = useState("");
   const [saving, setSaving] = useState(false);
+  const [savingOptions, setSavingOptions] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [optionsError, setOptionsError] = useState<string | null>(null);
 
   useEffect(() => {
     api
       .get("/quadra/payment-settings")
-      .then((res) => setPixEnabled(res.data.pixEnabled))
+      .then((res) => {
+        setPixEnabled(res.data.pixEnabled);
+        setAllowDepositPayment(res.data.allowDepositPayment);
+        setAllowFullPayment(res.data.allowFullPayment);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -109,14 +117,33 @@ function PixSettingsCard() {
     }
   }
 
+  async function handleToggleOption(field: "allowDepositPayment" | "allowFullPayment", value: boolean) {
+    const nextDeposit = field === "allowDepositPayment" ? value : allowDepositPayment;
+    const nextFull = field === "allowFullPayment" ? value : allowFullPayment;
+    setSavingOptions(true);
+    setOptionsError(null);
+    try {
+      const res = await api.put("/quadra/payment-options", {
+        allowDepositPayment: nextDeposit,
+        allowFullPayment: nextFull,
+      });
+      setAllowDepositPayment(res.data.allowDepositPayment);
+      setAllowFullPayment(res.data.allowFullPayment);
+    } catch (err: any) {
+      setOptionsError(err.response?.data?.message ?? "Não foi possível salvar essa opção.");
+    } finally {
+      setSavingOptions(false);
+    }
+  }
+
   if (loading) return null;
 
   return (
     <div className="mb-6 rounded-lg border bg-white p-4 shadow-sm">
-      <p className="mb-1 text-sm font-medium text-gray-700">Sinal via Pix na reserva</p>
+      <p className="mb-1 text-sm font-medium text-gray-700">Pagamento via Pix na reserva</p>
       <p className="mb-3 text-xs text-gray-500">
-        Cadastre o Access Token do Mercado Pago da sua arena para cobrar automaticamente um sinal de 20% em cada
-        reserva. Enquanto não cadastrar, o agendamento continua funcionando sem cobrança.
+        Cadastre o Access Token do Mercado Pago da sua arena para cobrar automaticamente pelo Pix em cada reserva.
+        Enquanto não cadastrar, o agendamento continua funcionando sem cobrança.
       </p>
 
       <p className="mb-3 text-sm">
@@ -130,7 +157,7 @@ function PixSettingsCard() {
 
       {error && <p className="mb-3 rounded bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <input
           type="password"
           placeholder="Access Token do Mercado Pago"
@@ -155,6 +182,31 @@ function PixSettingsCard() {
           </button>
         )}
       </div>
+
+      {pixEnabled && (
+        <div className="border-t pt-3">
+          <p className="mb-2 text-xs font-medium text-gray-700">Formas de pagamento oferecidas ao cliente</p>
+          {optionsError && <p className="mb-2 rounded bg-red-50 px-3 py-2 text-sm text-red-600">{optionsError}</p>}
+          <label className="mb-2 flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={allowDepositPayment}
+              disabled={savingOptions}
+              onChange={(e) => handleToggleOption("allowDepositPayment", e.target.checked)}
+            />
+            Sinal de 20% do valor
+          </label>
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={allowFullPayment}
+              disabled={savingOptions}
+              onChange={(e) => handleToggleOption("allowFullPayment", e.target.checked)}
+            />
+            Valor integral da reserva
+          </label>
+        </div>
+      )}
     </div>
   );
 }

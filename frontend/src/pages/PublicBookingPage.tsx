@@ -25,6 +25,10 @@ export function PublicBookingPage() {
   const { slug } = useParams<{ slug: string }>();
   const [arenaName, setArenaName] = useState<string | null>(null);
   const [courts, setCourts] = useState<PublicCourt[]>([]);
+  const [pixEnabled, setPixEnabled] = useState(false);
+  const [allowDepositPayment, setAllowDepositPayment] = useState(false);
+  const [allowFullPayment, setAllowFullPayment] = useState(false);
+  const [paymentMode, setPaymentMode] = useState<"DEPOSITO" | "INTEGRAL">("DEPOSITO");
   const [courtId, setCourtId] = useState("");
   const [date, setDate] = useState(todayIso());
   const [availability, setAvailability] = useState<Availability | null>(null);
@@ -45,6 +49,10 @@ export function PublicBookingPage() {
     api.get(`/booking/${slug}/courts`).then((res) => {
       setArenaName(res.data.arenaName);
       setCourts(res.data.courts);
+      setPixEnabled(res.data.pixEnabled);
+      setAllowDepositPayment(res.data.allowDepositPayment);
+      setAllowFullPayment(res.data.allowFullPayment);
+      setPaymentMode(res.data.allowDepositPayment ? "DEPOSITO" : "INTEGRAL");
       if (res.data.courts.length > 0) setCourtId(res.data.courts[0].id);
     });
   }, [slug]);
@@ -104,6 +112,13 @@ export function PublicBookingPage() {
     [availability, selectedSlot],
   );
 
+  const showPaymentModeChoice = pixEnabled && allowDepositPayment && allowFullPayment;
+
+  const amountDueNow = useMemo(() => {
+    if (!pixEnabled) return totalPrice;
+    return paymentMode === "INTEGRAL" ? totalPrice : Math.round(totalPrice * 0.2 * 100) / 100;
+  }, [pixEnabled, paymentMode, totalPrice]);
+
   async function handleSubmit() {
     if (!slug || !courtId || !selectedSlot) return;
     setSubmitting(true);
@@ -118,6 +133,7 @@ export function PublicBookingPage() {
         withExtraBlock,
         customerName,
         customerPhone,
+        paymentMode: pixEnabled ? paymentMode : undefined,
       });
       const booking: Booking = bookingRes.data;
       setSuccess(booking.status === "PENDENTE_PAGAMENTO" ? null : "Reserva confirmada com sucesso!");
@@ -182,15 +198,19 @@ export function PublicBookingPage() {
 
             {confirmedBooking && confirmedBooking.status === "PENDENTE_PAGAMENTO" && confirmedBooking.pix && (
               <div className="pb-confirm-card">
-                <p className="pb-confirm-title">Pague o sinal para garantir o horário</p>
+                <p className="pb-confirm-title">
+                  {confirmedBooking.paymentMode === "INTEGRAL"
+                    ? "Pague o valor integral para garantir o horário"
+                    : "Pague o sinal para garantir o horário"}
+                </p>
                 <p>
                   {new Date(`${confirmedBooking.date.slice(0, 10)}T00:00:00`).toLocaleDateString("pt-BR")} ·{" "}
                   {confirmedBooking.startTime}–{confirmedBooking.endTime}
                 </p>
                 <p>
-                  Sinal de {currencyFormatter.format(Number(confirmedBooking.depositAmount ?? 0))}. Escaneie o QR
-                  Code abaixo com o aplicativo do seu banco. Você tem 20 minutos para pagar, senão o horário é
-                  liberado de novo.
+                  {confirmedBooking.paymentMode === "INTEGRAL" ? "Valor" : "Sinal"} de{" "}
+                  {currencyFormatter.format(Number(confirmedBooking.depositAmount ?? 0))}. Escaneie o QR Code abaixo
+                  com o aplicativo do seu banco. Você tem 20 minutos para pagar, senão o horário é liberado de novo.
                 </p>
                 <img
                   src={`data:image/png;base64,${confirmedBooking.pix.qrCodeBase64}`}
@@ -286,6 +306,29 @@ export function PublicBookingPage() {
                   <span className="pb-summary-value">{currencyFormatter.format(totalPrice)}</span>
                 </div>
 
+                {showPaymentModeChoice && (
+                  <div className="pb-checkbox-row" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.5rem" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <input
+                        type="radio"
+                        name="paymentMode"
+                        checked={paymentMode === "DEPOSITO"}
+                        onChange={() => setPaymentMode("DEPOSITO")}
+                      />
+                      <span>Pagar sinal de 20% agora ({currencyFormatter.format(totalPrice * 0.2)}) e o restante presencialmente</span>
+                    </label>
+                    <label style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <input
+                        type="radio"
+                        name="paymentMode"
+                        checked={paymentMode === "INTEGRAL"}
+                        onChange={() => setPaymentMode("INTEGRAL")}
+                      />
+                      <span>Pagar o valor integral agora ({currencyFormatter.format(totalPrice)})</span>
+                    </label>
+                  </div>
+                )}
+
                 <div className="pb-customer-fields">
                   <div>
                     <label htmlFor="customerName">Seu nome</label>
@@ -314,7 +357,9 @@ export function PublicBookingPage() {
                   disabled={submitting || !customerName || !customerPhone}
                   className="pb-cta"
                 >
-                  Confirmar reserva — {currencyFormatter.format(totalPrice)}
+                  {pixEnabled
+                    ? `Confirmar reserva — pagar ${currencyFormatter.format(amountDueNow)} agora`
+                    : `Confirmar reserva — ${currencyFormatter.format(totalPrice)}`}
                 </button>
                 <p className="pb-foot-note">Sem necessidade de login</p>
               </div>

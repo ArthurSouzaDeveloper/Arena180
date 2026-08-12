@@ -13,6 +13,11 @@ const saveTokenSchema = z.object({
   accessToken: z.string().min(10),
 });
 
+const paymentOptionsSchema = z.object({
+  allowDepositPayment: z.boolean(),
+  allowFullPayment: z.boolean(),
+});
+
 router.get(
   "/payment-settings",
   asyncHandler(async (req, res) => {
@@ -34,6 +39,15 @@ router.delete(
   "/payment-settings",
   asyncHandler(async (req, res) => {
     const settings = await quadraSettingsService.removePixAccessToken(req.auth!.quadraId!);
+    res.json(settings);
+  }),
+);
+
+router.put(
+  "/payment-options",
+  asyncHandler(async (req, res) => {
+    const options = paymentOptionsSchema.parse(req.body);
+    const settings = await quadraSettingsService.updatePaymentOptions(req.auth!.quadraId!, options);
     res.json(settings);
   }),
 );

@@ -110,6 +110,9 @@ export interface PublicCourt {
 export interface PublicCourtsResponse {
   arenaName: string;
   courts: PublicCourt[];
+  pixEnabled: boolean;
+  allowDepositPayment: boolean;
+  allowFullPayment: boolean;
 }
 
 export interface Booking {
@@ -124,6 +127,7 @@ export interface Booking {
   status: "CONFIRMADA" | "CANCELADA" | "PENDENTE_PAGAMENTO";
   cancelToken: string;
   depositAmount: string | null;
+  paymentMode: "DEPOSITO" | "INTEGRAL" | null;
   pix: { qrCode: string; qrCodeBase64: string } | null;
 }
 

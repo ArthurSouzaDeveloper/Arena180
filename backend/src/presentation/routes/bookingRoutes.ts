@@ -13,6 +13,7 @@ const createSchema = z.object({
   withExtraBlock: z.boolean().optional(),
   customerName: z.string().min(1),
   customerPhone: z.string().min(1),
+  paymentMode: z.enum(["DEPOSITO", "INTEGRAL"]).optional(),
 });
 
 router.get(

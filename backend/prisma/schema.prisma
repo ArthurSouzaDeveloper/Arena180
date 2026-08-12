@@ -13,6 +13,8 @@ model Quadra {
   slug                   String   @unique
   active                 Boolean  @default(true)
   mercadoPagoAccessToken String?  @map("mercado_pago_access_token")
+  allowDepositPayment    Boolean  @default(true) @map("allow_deposit_payment")
+  allowFullPayment       Boolean  @default(false) @map("allow_full_payment")
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
@@ -151,6 +153,11 @@ enum BookingStatus {
   PENDENTE_PAGAMENTO
 }
 
+enum PaymentMode {
+  DEPOSITO
+  INTEGRAL
+}
+
 model Booking {
   id             String        @id @default(uuid())
   courtId        String        @map("court_id")
@@ -163,6 +170,7 @@ model Booking {
   status         BookingStatus @default(CONFIRMADA)
   cancelToken    String        @unique @default(uuid()) @map("cancel_token")
   depositAmount  Decimal?      @map("deposit_amount") @db.Decimal(10, 2)
+  paymentMode    PaymentMode?  @map("payment_mode")
   pixPaymentId   String?       @map("pix_payment_id")
   holdExpiresAt  DateTime?     @map("hold_expires_at")
   createdAt      DateTime      @default(now())

@@ -387,6 +387,17 @@ function CourtCard({
                     Pendente pagamento
                   </span>
                 )}
+                {booking.status === "CONFIRMADA" && booking.paymentMode === "DEPOSITO" && (
+                  <span className="ml-2 rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                    Sinal pago · falta {currencyFormatter.format(Number(booking.totalPrice) - Number(booking.depositAmount ?? 0))}{" "}
+                    presencial
+                  </span>
+                )}
+                {booking.status === "CONFIRMADA" && booking.paymentMode === "INTEGRAL" && (
+                  <span className="ml-2 rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                    Pago integralmente
+                  </span>
+                )}
               </span>
               <button onClick={() => cancelBooking(booking.id)} className="text-xs text-red-600 hover:underline">
                 Cancelar
