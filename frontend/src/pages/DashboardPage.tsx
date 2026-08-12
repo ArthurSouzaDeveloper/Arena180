@@ -68,6 +68,97 @@ function BookingLinkCard() {
   );
 }
 
+function PixSettingsCard() {
+  const [pixEnabled, setPixEnabled] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [accessToken, setAccessToken] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api
+      .get("/quadra/payment-settings")
+      .then((res) => setPixEnabled(res.data.pixEnabled))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleSave() {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await api.put("/quadra/payment-settings", { accessToken });
+      setPixEnabled(res.data.pixEnabled);
+      setAccessToken("");
+    } catch (err: any) {
+      setError(err.response?.data?.message ?? "Não foi possível salvar o token.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleRemove() {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await api.delete("/quadra/payment-settings");
+      setPixEnabled(res.data.pixEnabled);
+    } catch (err: any) {
+      setError(err.response?.data?.message ?? "Não foi possível remover o token.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) return null;
+
+  return (
+    <div className="mb-6 rounded-lg border bg-white p-4 shadow-sm">
+      <p className="mb-1 text-sm font-medium text-gray-700">Sinal via Pix na reserva</p>
+      <p className="mb-3 text-xs text-gray-500">
+        Cadastre o Access Token do Mercado Pago da sua arena para cobrar automaticamente um sinal de 20% em cada
+        reserva. Enquanto não cadastrar, o agendamento continua funcionando sem cobrança.
+      </p>
+
+      <p className="mb-3 text-sm">
+        Status:{" "}
+        {pixEnabled ? (
+          <span className="font-semibold text-primary-700">ativo</span>
+        ) : (
+          <span className="font-semibold text-gray-500">desativado</span>
+        )}
+      </p>
+
+      {error && <p className="mb-3 rounded bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="password"
+          placeholder="Access Token do Mercado Pago"
+          value={accessToken}
+          onChange={(e) => setAccessToken(e.target.value)}
+          className="min-w-0 flex-1 rounded border border-gray-300 px-3 py-2 text-sm"
+        />
+        <button
+          onClick={handleSave}
+          disabled={saving || !accessToken}
+          className="shrink-0 rounded bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
+        >
+          Salvar
+        </button>
+        {pixEnabled && (
+          <button
+            onClick={handleRemove}
+            disabled={saving}
+            className="shrink-0 rounded border border-red-300 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+          >
+            Desativar
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function DashboardPage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
 
@@ -80,6 +171,7 @@ export function DashboardPage() {
       <h1 className="mb-6 text-xl font-bold">Faturamento</h1>
 
       <BookingLinkCard />
+      <PixSettingsCard />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Hoje" value={currencyFormatter.format(summary?.revenueToday ?? 0)} />

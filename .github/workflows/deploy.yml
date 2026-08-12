@@ -57,7 +57,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASSWORD }}
-          envs: POSTGRES_PASSWORD,JWT_SECRET,PUBLIC_ORIGIN,API_ORIGIN
+          envs: POSTGRES_PASSWORD,JWT_SECRET,PUBLIC_ORIGIN,API_ORIGIN,TOKEN_ENCRYPTION_KEY
           script: |
             set -e
 
@@ -70,6 +70,7 @@ jobs:
             JWT_SECRET=${JWT_SECRET}
             PUBLIC_ORIGIN=${PUBLIC_ORIGIN}
             API_ORIGIN=${API_ORIGIN}
+            TOKEN_ENCRYPTION_KEY=${TOKEN_ENCRYPTION_KEY}
             EOF
 
             cd /opt/gestquadra
@@ -84,6 +85,7 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           PUBLIC_ORIGIN: ${{ secrets.PUBLIC_ORIGIN }}
           API_ORIGIN: ${{ secrets.API_ORIGIN }}
+          TOKEN_ENCRYPTION_KEY: ${{ secrets.TOKEN_ENCRYPTION_KEY }}
 
       - name: Seed superadmin / arena (manual dispatch only)
         if: ${{ inputs.superadmin_email != '' || inputs.arena_slug != '' }}

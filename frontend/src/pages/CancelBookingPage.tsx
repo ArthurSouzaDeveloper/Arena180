@@ -72,7 +72,11 @@ export function CancelBookingPage() {
                 booking.status === "CONFIRMADA" ? "pb-status-confirmed" : "pb-status-cancelled"
               }`}
             >
-              {booking.status === "CONFIRMADA" ? "Confirmada" : "Cancelada"}
+              {booking.status === "CONFIRMADA"
+                ? "Confirmada"
+                : booking.status === "PENDENTE_PAGAMENTO"
+                  ? "Pendente pagamento"
+                  : "Cancelada"}
             </span>
 
             <div className="pb-card-divider" />

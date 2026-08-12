@@ -382,6 +382,11 @@ function CourtCard({
               <span>
                 {new Date(`${booking.date.slice(0, 10)}T00:00:00`).toLocaleDateString("pt-BR")} ·{" "}
                 {booking.startTime}–{booking.endTime} · {booking.customerName} ({booking.customerPhone})
+                {booking.status === "PENDENTE_PAGAMENTO" && (
+                  <span className="ml-2 rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                    Pendente pagamento
+                  </span>
+                )}
               </span>
               <button onClick={() => cancelBooking(booking.id)} className="text-xs text-red-600 hover:underline">
                 Cancelar

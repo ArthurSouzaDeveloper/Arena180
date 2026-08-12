@@ -1,9 +1,14 @@
-import { Prisma } from "@prisma/client";
+import { BookingStatus, Prisma } from "@prisma/client";
 import { prisma } from "../../config/database";
 import { AppError, ConflictError, NotFoundError } from "../../domain/errors";
 import { addMinutes, overlaps } from "../../domain/time";
+import { decryptQuadraAccessToken } from "./quadraSettingsService";
+import { mercadoPagoClient } from "../../infrastructure/mercadoPago/mercadoPagoClient";
+import { env } from "../../config/env";
 
 const CANCEL_MIN_HOURS_BEFORE = 24;
+const DEPOSIT_RATE = 0.2;
+const PAYMENT_HOLD_MINUTES = 20;
 
 interface CreateBookingInput {
   date: string;
@@ -12,6 +17,8 @@ interface CreateBookingInput {
   customerName: string;
   customerPhone: string;
 }
+
+const ACTIVE_BOOKING_STATUSES: BookingStatus[] = ["CONFIRMADA", "PENDENTE_PAGAMENTO"];
 
 async function findQuadraBySlug(slug: string) {
   const quadra = await prisma.quadra.findUnique({ where: { slug } });
@@ -48,6 +55,26 @@ async function findBookingByToken(quadraSlug: string, bookingId: string, token: 
 function hoursUntilStart(booking: { date: Date; startTime: string }) {
   const startsAt = new Date(`${booking.date.toISOString().slice(0, 10)}T${booking.startTime}:00`);
   return (startsAt.getTime() - Date.now()) / (1000 * 60 * 60);
+}
+
+function isHoldExpired(booking: { status: string; holdExpiresAt: Date | null }) {
+  return booking.status === "PENDENTE_PAGAMENTO" && !!booking.holdExpiresAt && booking.holdExpiresAt < new Date();
+}
+
+async function expireStaleHolds(courtId: string, dateValue?: Date) {
+  await prisma.booking.updateMany({
+    where: {
+      courtId,
+      ...(dateValue ? { date: dateValue } : {}),
+      status: "PENDENTE_PAGAMENTO",
+      holdExpiresAt: { lt: new Date() },
+    },
+    data: { status: "CANCELADA" },
+  });
+}
+
+function payerEmailFor(bookingId: string) {
+  return `reserva-${bookingId}@gestquadra.app`;
 }
 
 export const bookingService = {
@@ -90,9 +117,11 @@ export const bookingService = {
       return { open: false, slots: [], reason: fullDayBlock.reason ?? undefined };
     }
 
+    await expireStaleHolds(courtId, dateValue);
+
     const [partialBlocks, bookings] = await Promise.all([
       prisma.courtBlock.findMany({ where: { courtId, date: dateValue, startTime: { not: null } } }),
-      prisma.booking.findMany({ where: { courtId, date: dateValue, status: "CONFIRMADA" } }),
+      prisma.booking.findMany({ where: { courtId, date: dateValue, status: { in: ACTIVE_BOOKING_STATUSES } } }),
     ]);
 
     const slots: { startTime: string; endTime: string; available: boolean }[] = [];
@@ -140,8 +169,15 @@ export const bookingService = {
     const totalPrice = Number(court.hourlyRate) + (withExtraBlock ? Number(court.extraBlockPrice ?? 0) : 0);
     const dateValue = new Date(input.date);
 
+    await expireStaleHolds(courtId, dateValue);
+
+    const pixEnabled = Boolean(quadra.mercadoPagoAccessToken);
+    const depositAmount = pixEnabled ? Math.round(totalPrice * DEPOSIT_RATE * 100) / 100 : null;
+    const holdExpiresAt = pixEnabled ? new Date(Date.now() + PAYMENT_HOLD_MINUTES * 60 * 1000) : null;
+
+    let booking;
     try {
-      return await prisma.$transaction(
+      booking = await prisma.$transaction(
         async (tx) => {
           const fullDayBlock = await tx.courtBlock.findFirst({
             where: { courtId, date: dateValue, startTime: null },
@@ -159,7 +195,7 @@ export const bookingService = {
           }
 
           const existing = await tx.booking.findMany({
-            where: { courtId, date: dateValue, status: "CONFIRMADA" },
+            where: { courtId, date: dateValue, status: { in: ACTIVE_BOOKING_STATUSES } },
           });
           const conflict = existing.some((b) => overlaps(input.startTime, endTime, b.startTime, b.endTime));
           if (conflict) {
@@ -175,7 +211,9 @@ export const bookingService = {
               customerName: input.customerName,
               customerPhone: input.customerPhone,
               totalPrice,
-              status: "CONFIRMADA",
+              status: pixEnabled ? "PENDENTE_PAGAMENTO" : "CONFIRMADA",
+              depositAmount,
+              holdExpiresAt,
             },
           });
         },
@@ -186,6 +224,83 @@ export const bookingService = {
         throw new ConflictError("Esse horário acabou de ser reservado. Escolha outro.");
       }
       throw err;
+    }
+
+    if (!pixEnabled) {
+      return { ...booking, pix: null };
+    }
+
+    try {
+      const accessToken = decryptQuadraAccessToken(quadra.mercadoPagoAccessToken!);
+      const payment = await mercadoPagoClient.createPixPayment({
+        accessToken,
+        amount: depositAmount!,
+        description: `Sinal de reserva ${court.name} - ${input.date} ${input.startTime}`,
+        externalReference: booking.id,
+        payerEmail: payerEmailFor(booking.id),
+        notificationUrl: env.publicBaseUrl ? `${env.publicBaseUrl}/api/booking/${quadraSlug}/pix-webhook` : undefined,
+      });
+
+      const updated = await prisma.booking.update({
+        where: { id: booking.id },
+        data: { pixPaymentId: payment.id },
+      });
+
+      return {
+        ...updated,
+        pix: { qrCode: payment.qrCode, qrCodeBase64: payment.qrCodeBase64 },
+      };
+    } catch (err) {
+      await prisma.booking.update({ where: { id: booking.id }, data: { status: "CANCELADA" } });
+      throw err;
+    }
+  },
+
+  async getPaymentStatus(quadraSlug: string, bookingId: string, token: string) {
+    const quadra = await findQuadraBySlug(quadraSlug);
+    const booking = await findBookingByToken(quadraSlug, bookingId, token);
+
+    if (isHoldExpired(booking)) {
+      await prisma.booking.update({ where: { id: booking.id }, data: { status: "CANCELADA" } });
+      return { status: "CANCELADA", expired: true };
+    }
+
+    if (booking.status !== "PENDENTE_PAGAMENTO" || !booking.pixPaymentId || !quadra.mercadoPagoAccessToken) {
+      return { status: booking.status, expired: false };
+    }
+
+    const accessToken = decryptQuadraAccessToken(quadra.mercadoPagoAccessToken);
+    const payment = await mercadoPagoClient.getPayment(accessToken, booking.pixPaymentId);
+
+    if (payment.status === "approved") {
+      await prisma.booking.update({ where: { id: booking.id }, data: { status: "CONFIRMADA" } });
+      return { status: "CONFIRMADA", expired: false };
+    }
+
+    if (payment.status === "cancelled" || payment.status === "rejected") {
+      await prisma.booking.update({ where: { id: booking.id }, data: { status: "CANCELADA" } });
+      return { status: "CANCELADA", expired: false };
+    }
+
+    return { status: "PENDENTE_PAGAMENTO", expired: false };
+  },
+
+  async handlePixWebhook(quadraSlug: string, paymentId: string) {
+    const quadra = await findQuadraBySlug(quadraSlug);
+    if (!quadra.mercadoPagoAccessToken) return;
+
+    const booking = await prisma.booking.findFirst({
+      where: { pixPaymentId: paymentId, court: { quadraId: quadra.id } },
+    });
+    if (!booking || booking.status !== "PENDENTE_PAGAMENTO") return;
+
+    const accessToken = decryptQuadraAccessToken(quadra.mercadoPagoAccessToken);
+    const payment = await mercadoPagoClient.getPayment(accessToken, paymentId);
+
+    if (payment.status === "approved") {
+      await prisma.booking.update({ where: { id: booking.id }, data: { status: "CONFIRMADA" } });
+    } else if (payment.status === "cancelled" || payment.status === "rejected") {
+      await prisma.booking.update({ where: { id: booking.id }, data: { status: "CANCELADA" } });
     }
   },
 
@@ -202,7 +317,7 @@ export const bookingService = {
       throw new AppError("Essa reserva já está cancelada");
     }
 
-    if (hoursUntilStart(booking) < CANCEL_MIN_HOURS_BEFORE) {
+    if (booking.status === "CONFIRMADA" && hoursUntilStart(booking) < CANCEL_MIN_HOURS_BEFORE) {
       throw new AppError(
         `O cancelamento só pode ser feito até ${CANCEL_MIN_HOURS_BEFORE}h antes do horário reservado`,
       );
@@ -216,8 +331,13 @@ export const bookingService = {
     if (!court) {
       throw new NotFoundError("Quadra não encontrada");
     }
+    await expireStaleHolds(courtId);
     return prisma.booking.findMany({
-      where: { courtId, status: "CONFIRMADA", date: { gte: new Date(new Date().toISOString().slice(0, 10)) } },
+      where: {
+        courtId,
+        status: { in: ACTIVE_BOOKING_STATUSES },
+        date: { gte: new Date(new Date().toISOString().slice(0, 10)) },
+      },
       orderBy: [{ date: "asc" }, { startTime: "asc" }],
     });
   },

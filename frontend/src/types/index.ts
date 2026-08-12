@@ -121,12 +121,19 @@ export interface Booking {
   customerName: string;
   customerPhone: string;
   totalPrice: string;
-  status: "CONFIRMADA" | "CANCELADA";
+  status: "CONFIRMADA" | "CANCELADA" | "PENDENTE_PAGAMENTO";
   cancelToken: string;
+  depositAmount: string | null;
+  pix: { qrCode: string; qrCodeBase64: string } | null;
 }
 
 export interface BookingWithCourt extends Booking {
   court: { name: string };
   cancellable: boolean;
   cancelMinHoursBefore: number;
+}
+
+export interface PaymentStatus {
+  status: "CONFIRMADA" | "CANCELADA" | "PENDENTE_PAGAMENTO";
+  expired: boolean;
 }

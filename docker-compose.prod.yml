@@ -24,6 +24,8 @@ services:
       JWT_EXPIRES_IN: 7d
       UPLOADS_DIR: uploads
       CORS_ORIGIN: ${PUBLIC_ORIGIN}
+      TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY}
+      PUBLIC_BASE_URL: ${API_ORIGIN}
     ports:
       - "4000:4000"
     volumes:

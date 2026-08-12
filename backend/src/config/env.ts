@@ -17,4 +17,6 @@ export const env = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
   uploadsDir: process.env.UPLOADS_DIR ?? "uploads",
   corsOrigin: process.env.CORS_ORIGIN ?? "*",
+  tokenEncryptionKey: required("TOKEN_ENCRYPTION_KEY", "dev-token-encryption-key-change-me"),
+  publicBaseUrl: process.env.PUBLIC_BASE_URL ?? "",
 };

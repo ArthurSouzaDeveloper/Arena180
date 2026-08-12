@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../lib/api";
 import { Availability, Booking, PublicCourt } from "../types";
 import "../styles/publicBooking.css";
+
+const PAYMENT_POLL_INTERVAL_MS = 4000;
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -35,6 +37,8 @@ export function PublicBookingPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [confirmedBooking, setConfirmedBooking] = useState<Booking | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [paymentExpired, setPaymentExpired] = useState(false);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (!slug) return;
@@ -54,6 +58,37 @@ export function PublicBookingPage() {
       .then((res) => setAvailability(res.data))
       .finally(() => setLoadingAvailability(false));
   }, [slug, courtId, date]);
+
+  useEffect(() => {
+    if (!slug || !confirmedBooking || confirmedBooking.status !== "PENDENTE_PAGAMENTO") {
+      return;
+    }
+
+    function poll() {
+      api
+        .get(`/booking/${slug}/bookings/${confirmedBooking!.id}/payment-status`, {
+          params: { token: confirmedBooking!.cancelToken },
+        })
+        .then((res) => {
+          if (res.data.status === "CONFIRMADA") {
+            setConfirmedBooking((prev) => (prev ? { ...prev, status: "CONFIRMADA" } : prev));
+            if (pollingRef.current) clearInterval(pollingRef.current);
+          } else if (res.data.status === "CANCELADA") {
+            setPaymentExpired(true);
+            if (pollingRef.current) clearInterval(pollingRef.current);
+          }
+        })
+        .catch(() => {
+          // Ignora falhas isoladas de rede durante o polling, tenta novamente na próxima.
+        });
+    }
+
+    poll();
+    pollingRef.current = setInterval(poll, PAYMENT_POLL_INTERVAL_MS);
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [slug, confirmedBooking?.id, confirmedBooking?.status]);
 
   const selectedCourt = useMemo(() => courts.find((c) => c.id === courtId), [courts, courtId]);
 
@@ -75,6 +110,7 @@ export function PublicBookingPage() {
     setError(null);
     setSuccess(null);
     setConfirmedBooking(null);
+    setPaymentExpired(false);
     try {
       const bookingRes = await api.post(`/booking/${slug}/courts/${courtId}`, {
         date,
@@ -83,8 +119,9 @@ export function PublicBookingPage() {
         customerName,
         customerPhone,
       });
-      setSuccess("Reserva confirmada com sucesso!");
-      setConfirmedBooking(bookingRes.data);
+      const booking: Booking = bookingRes.data;
+      setSuccess(booking.status === "PENDENTE_PAGAMENTO" ? null : "Reserva confirmada com sucesso!");
+      setConfirmedBooking(booking);
       setSelectedSlot(null);
       setCustomerName("");
       setCustomerPhone("");
@@ -94,6 +131,15 @@ export function PublicBookingPage() {
       setError(err.response?.data?.message ?? "Não foi possível concluir a reserva.");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  function handleRetryAfterExpiration() {
+    setConfirmedBooking(null);
+    setPaymentExpired(false);
+    setSuccess(null);
+    if (slug && courtId && date) {
+      api.get(`/booking/${slug}/courts/${courtId}/availability`, { params: { date } }).then((res) => setAvailability(res.data));
     }
   }
 
@@ -134,9 +180,30 @@ export function PublicBookingPage() {
               </div>
             </div>
 
-            {confirmedBooking && (
+            {confirmedBooking && confirmedBooking.status === "PENDENTE_PAGAMENTO" && confirmedBooking.pix && (
               <div className="pb-confirm-card">
-                <p className="pb-confirm-title">{success}</p>
+                <p className="pb-confirm-title">Pague o sinal para garantir o horário</p>
+                <p>
+                  {new Date(`${confirmedBooking.date.slice(0, 10)}T00:00:00`).toLocaleDateString("pt-BR")} ·{" "}
+                  {confirmedBooking.startTime}–{confirmedBooking.endTime}
+                </p>
+                <p>
+                  Sinal de {currencyFormatter.format(Number(confirmedBooking.depositAmount ?? 0))}. Escaneie o QR
+                  Code abaixo com o aplicativo do seu banco. Você tem 20 minutos para pagar, senão o horário é
+                  liberado de novo.
+                </p>
+                <img
+                  src={`data:image/png;base64,${confirmedBooking.pix.qrCodeBase64}`}
+                  alt="QR Code do Pix"
+                  style={{ maxWidth: "220px", margin: "0.75rem auto", display: "block" }}
+                />
+                <p className="pb-note-muted">Aguardando confirmação do pagamento...</p>
+              </div>
+            )}
+
+            {confirmedBooking && confirmedBooking.status === "CONFIRMADA" && (
+              <div className="pb-confirm-card">
+                <p className="pb-confirm-title">{success ?? "Reserva confirmada com sucesso!"}</p>
                 <p>
                   {new Date(`${confirmedBooking.date.slice(0, 10)}T00:00:00`).toLocaleDateString("pt-BR")} ·{" "}
                   {confirmedBooking.startTime}–{confirmedBooking.endTime}
@@ -147,6 +214,15 @@ export function PublicBookingPage() {
                     Cancelar esta reserva
                   </Link>
                 </p>
+              </div>
+            )}
+
+            {paymentExpired && (
+              <div className="pb-alert pb-alert-warn" style={{ marginBottom: "1.75rem" }}>
+                O prazo para pagamento do sinal expirou e o horário foi liberado.{" "}
+                <button onClick={handleRetryAfterExpiration} className="pb-note-muted" style={{ textDecoration: "underline", cursor: "pointer" }}>
+                  Escolher horário novamente
+                </button>
               </div>
             )}
 

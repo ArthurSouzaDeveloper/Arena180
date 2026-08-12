@@ -61,4 +61,24 @@ router.post(
   }),
 );
 
+router.get(
+  "/:quadraSlug/bookings/:bookingId/payment-status",
+  asyncHandler(async (req, res) => {
+    const { token } = tokenSchema.parse(req.query);
+    const status = await bookingService.getPaymentStatus(req.params.quadraSlug, req.params.bookingId, token);
+    res.json(status);
+  }),
+);
+
+router.post(
+  "/:quadraSlug/pix-webhook",
+  asyncHandler(async (req, res) => {
+    const paymentId = req.body?.data?.id ?? req.query["data.id"];
+    if (paymentId) {
+      await bookingService.handlePixWebhook(req.params.quadraSlug, String(paymentId));
+    }
+    res.status(200).send("ok");
+  }),
+);
+
 export default router;
