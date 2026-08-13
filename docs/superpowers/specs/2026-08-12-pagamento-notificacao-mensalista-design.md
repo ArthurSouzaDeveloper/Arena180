@@ -1,6 +1,6 @@
 # Sinal via Pix, notificação por WhatsApp e mensalistas
 
-Data: 2026-08-12
+Data: 2026-08-12, revisado em 2026-08-13
 
 ## Contexto
 
@@ -15,6 +15,8 @@ O gateway de pagamento escolhido é o Mercado Pago, via Checkout Transparente, u
 O provedor de WhatsApp escolhido é a API oficial da Meta, Cloud API, exigindo número de telefone dedicado, verificação de empresa no Meta Business Manager, e aprovação prévia de modelo de mensagem.
 
 Cada arena decide individualmente se quer usar o pagamento via Pix e se quer usar a notificação por WhatsApp. Enquanto a arena não tiver a credencial correspondente cadastrada, o recurso fica desativado e o sistema se comporta exatamente como hoje. A Play Soccer é a primeira arena que vai ativar ambos, assim que o dono providenciar as credenciais.
+
+O sinal via Pix, incluindo a opção de pagamento integral em vez do sinal, já foi implementado e está em produção. Cada arena escolhe, de forma independente, se aceita sinal de 20%, valor integral, ou os dois, e o cliente escolhe entre as opções habilitadas no momento da reserva. O restante deste documento, a partir daqui, cobre o desenho já ajustado para WhatsApp e mensalistas, que ainda serão implementados.
 
 ## Arquitetura de dados
 
@@ -32,7 +34,9 @@ Na tabela de quadras (`courts`), um campo novo e opcional, valor de mensalista p
 
 Na tabela de reservas (`bookings`), campos novos: valor do sinal pago, identificador do pagamento no Mercado Pago, prazo de expiração da espera de pagamento, e um vínculo opcional com uma assinatura de mensalista, para reservas geradas automaticamente a partir de uma assinatura.
 
-Uma tabela nova, assinaturas de mensalista, com quadra, nome e telefone do cliente, dia da semana, horário de início e fim, data de início e fim do período de 30 dias, valor total cobrado, e status de pagamento.
+Uma tabela nova, assinaturas de mensalista, com quadra, nome e telefone do cliente, dia da semana, horário de início e fim, data de início do primeiro ciclo, status (ativa ou cancelada), e controle de qual ciclo de 28 dias já teve aviso de renovação enviado. Diferente do desenho original, essa tabela não guarda mais uma data de fim, porque a assinatura passou a ser por tempo indeterminado até cancelamento.
+
+Na tabela de arenas, mais um campo novo e opcional, número de WhatsApp de administração, usado para receber o aviso de nova reserva avulsa. É diferente do número usado para enviar as mensagens automáticas aos clientes.
 
 ## Fluxo do sinal de 20% via Pix na reserva avulsa
 
@@ -48,31 +52,43 @@ A tela de espera de pagamento deixa claro que o horário só está garantido dep
 
 ## Fluxo de notificação por WhatsApp
 
-Ao cadastrar as credenciais do WhatsApp, a arena vê três opções independentes que pode ligar ou desligar, envio de confirmação quando a reserva é paga ou criada, envio de lembrete algumas horas antes do horário marcado, e envio de aviso quando uma reserva é cancelada.
+Ao cadastrar as credenciais do WhatsApp, a arena vê quatro opções independentes que pode ligar ou desligar:
 
-Confirmação e cancelamento são disparados no exato momento em que o evento acontece no sistema.
+Confirmação para o cliente, quando a reserva é paga ou criada.
 
-O lembrete exige uma rotina em segundo plano, que roda periodicamente verificando quais reservas confirmadas estão se aproximando do horário de lembrete configurado e ainda não tiveram lembrete enviado, disparando a mensagem nesse momento.
+Lembrete para o cliente, algumas horas antes do horário marcado.
 
-Cada mensagem usa um modelo de texto pré aprovado pela Meta, com variáveis preenchidas automaticamente, nome do cliente, nome da quadra, data e horário.
+Aviso de renovação para o mensalista, avisando que o ciclo de 30 dias está terminando e é hora de acertar o próximo mês presencialmente.
 
-Se o envio falhar, por número inválido ou erro temporário da Meta, o sistema apenas registra a falha, sem impedir a reserva nem travar o fluxo principal. A rotina de lembrete tenta novamente na execução seguinte se não conseguir rodar em determinado horário.
+Aviso de nova reserva avulsa para a própria arena, sempre que um cliente faz uma reserva avulsa nova, enviado para um número de WhatsApp de administração cadastrado pela arena, diferente do número usado para enviar as mensagens automáticas. Para a Play Soccer esse número é +55 19 99214-7153.
 
-A lista exata de quais eventos ativar para a Play Soccer ainda está pendente de confirmação do dono. A estrutura é construída para suportar os três desde já, com cada um configurável individualmente.
+Confirmação e o aviso de reserva avulsa são disparados no exato momento em que o evento acontece no sistema.
+
+O lembrete de horário e o aviso de renovação de mensalista exigem uma rotina em segundo plano, que roda periodicamente. Para o lembrete de horário, ela verifica quais reservas confirmadas estão se aproximando do horário configurado e ainda não tiveram lembrete enviado. Para a renovação do mensalista, ela verifica quais assinaturas ativas completaram 28 dias desde o início do ciclo atual e ainda não tiveram o aviso daquele ciclo enviado.
+
+Cada mensagem usa um modelo de texto pré aprovado pela Meta, com variáveis preenchidas automaticamente, como nome do cliente, nome da quadra, data e horário.
+
+Se o envio falhar, por número inválido ou erro temporário da Meta, o sistema apenas registra a falha, sem impedir a reserva nem travar o fluxo principal. A rotina em segundo plano tenta novamente na execução seguinte se não conseguir rodar em determinado horário.
+
+A Play Soccer pretende ativar os quatro avisos assim que a credencial da Meta estiver pronta. A estrutura é construída para suportar os quatro desde já, com cada um configurável individualmente por arena.
 
 ## Fluxo de mensalista
 
 Quando a quadra tem valor de mensalista cadastrado, aparece na página pública uma opção de assinatura mensalista, ao lado da reserva avulsa. O cliente escolhe o dia da semana e o horário fixo desejado.
 
-O sistema calcula quantas vezes aquele dia da semana ocorre nos próximos 30 dias a partir de hoje, verifica se todas as ocorrências estão livres, sem reserva avulsa confirmada nem outro mensalista no mesmo espaço, e mostra o valor total, valor por hora vezes quantidade de ocorrências. Por exemplo, R$165 vezes quatro ocorrências de uma quarta feira.
+O sistema calcula quantas vezes aquele dia da semana ocorre nos próximos 30 dias a partir de hoje, verifica se todas as ocorrências estão livres, sem reserva avulsa confirmada nem outro mensalista no mesmo espaço, e mostra o valor total do primeiro ciclo, valor por hora vezes quantidade de ocorrências. Por exemplo, R$165 vezes quatro ocorrências de uma quarta feira.
 
-Se todas as datas estiverem livres, o cliente segue para pagamento do valor cheio via Pix, usando o mesmo mecanismo de QR Code e prazo de vinte minutos do sinal avulso.
+Se todas as datas estiverem livres, o cliente segue para pagamento do sinal de 20% sobre esse valor via Pix, usando o mesmo mecanismo de QR Code e prazo de vinte minutos já usado na reserva avulsa. O restante de cada mês é acertado presencialmente com o dono, mês a mês, por fora do sistema.
 
-Quando o pagamento é confirmado, o sistema cria automaticamente uma reserva individual para cada data calculada, todas vinculadas à mesma assinatura. Cada uma dessas reservas se comporta como uma reserva comum em todas as telas existentes, disponibilidade, cancelamento pelo dono, e listagem no painel, sem exigir nenhuma lógica nova nesses pontos.
+Quando o pagamento do sinal é confirmado, o sistema cria automaticamente uma reserva individual para cada data do primeiro ciclo, todas vinculadas à mesma assinatura. Cada uma dessas reservas se comporta como uma reserva comum em todas as telas existentes, disponibilidade, cancelamento pelo dono, e listagem no painel, sem exigir nenhuma lógica nova nesses pontos.
 
 Se alguma das datas necessárias já estiver ocupada no momento da tentativa de assinatura, o sistema recusa a assinatura inteira antes de gerar o Pix, informando qual data está em conflito, evitando cobrar por um período que não pode ser garantido por inteiro.
 
-Ao final dos 30 dias, a assinatura expira. Não existe renovação automática. O cliente precisa entrar no sistema e assinar novamente se quiser continuar, e o horário volta a ficar disponível para reserva avulsa ou outro mensalista a partir da data seguinte à última paga.
+Diferente do desenho original, a assinatura de mensalista não tem mais uma data de fim fixa. Enquanto estiver com status ativa, o mesmo dia da semana e horário ficam reservados só para aquele cliente indefinidamente, protegendo contra qualquer outro cliente, avulso ou mensalista, tentando ocupar o mesmo espaço em qualquer mês futuro. Uma rotina em segundo plano mantém sempre um horizonte de reservas geradas à frente, por exemplo os próximos 60 dias, criando novas ocorrências conforme o tempo passa, para que o horário nunca apareça como disponível para outra pessoa.
+
+O pagamento de cada mês depois do primeiro é combinado presencialmente entre o cliente e o dono, fora do sistema. O papel do sistema nesse ponto é só avisar por WhatsApp quando o ciclo de 28 dias se aproxima do fim, como descrito na seção de notificação, para lembrar o cliente de acertar o próximo mês.
+
+A assinatura só termina quando o cliente ou o dono cancela explicitamente, seja pelo link de cancelamento do cliente, seja pelo painel administrativo do dono. Ao cancelar, as ocorrências futuras já geradas são canceladas e o horário volta a ficar disponível para reserva avulsa ou outro mensalista a partir da próxima data livre.
 
 ## Tratamento de erro
 
@@ -94,4 +110,4 @@ Mensalista: cálculo de ocorrências dentro dos 30 dias, caso de conflito parcia
 
 ## Fora de escopo por enquanto
 
-Renovação automática de mensalista. Reembolso ou cancelamento parcial de assinatura em andamento. Comissão da plataforma sobre transações de outras arenas. Split de pagamento entre GestQuadra e arena.
+Cobrança automática recorrente do mensalista pelo sistema. O pagamento de cada mês depois do primeiro é sempre presencial, combinado direto com o dono. Reembolso ou cancelamento parcial de assinatura em andamento. Comissão da plataforma sobre transações de outras arenas. Split de pagamento entre GestQuadra e arena.
