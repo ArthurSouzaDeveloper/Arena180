@@ -11,6 +11,12 @@ export default {
           600: "#15803d",
           700: "#166534",
         },
+        paper: "#f6f4ee",
+        sidebar: {
+          DEFAULT: "#12281a",
+          muted: "#86ab8f",
+          accent: "#4ade80",
+        },
       },
     },
   },

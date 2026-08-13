@@ -4,5 +4,5 @@
 
 html,
 body {
-  @apply overflow-x-hidden bg-gray-50 text-gray-900;
+  @apply overflow-x-hidden bg-paper text-gray-900;
 }
