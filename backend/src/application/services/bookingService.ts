@@ -392,6 +392,38 @@ export const bookingService = {
     });
   },
 
+  async listAllForQuadra(
+    quadraId: string,
+    filters: { courtId?: string; status?: BookingStatus; dateFrom?: string; dateTo?: string },
+  ) {
+    await prisma.booking.updateMany({
+      where: {
+        court: { quadraId },
+        status: "PENDENTE_PAGAMENTO",
+        holdExpiresAt: { lt: new Date() },
+      },
+      data: { status: "CANCELADA" },
+    });
+
+    return prisma.booking.findMany({
+      where: {
+        court: { quadraId },
+        ...(filters.courtId ? { courtId: filters.courtId } : {}),
+        ...(filters.status ? { status: filters.status } : {}),
+        ...(filters.dateFrom || filters.dateTo
+          ? {
+              date: {
+                ...(filters.dateFrom ? { gte: new Date(filters.dateFrom) } : {}),
+                ...(filters.dateTo ? { lte: new Date(filters.dateTo) } : {}),
+              },
+            }
+          : {}),
+      },
+      include: { court: { select: { name: true } } },
+      orderBy: [{ date: "desc" }, { startTime: "desc" }],
+    });
+  },
+
   async adminCancel(quadraId: string, courtId: string, bookingId: string) {
     const court = await prisma.court.findFirst({ where: { id: courtId, quadraId } });
     if (!court) {

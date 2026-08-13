@@ -11,6 +11,7 @@ import courtRoutes from "./presentation/routes/courtRoutes";
 import bookingRoutes from "./presentation/routes/bookingRoutes";
 import superadminRoutes from "./presentation/routes/superadminRoutes";
 import quadraSettingsRoutes from "./presentation/routes/quadraSettingsRoutes";
+import bookingsAdminRoutes from "./presentation/routes/bookingsAdminRoutes";
 
 export function createApp() {
   const app = express();
@@ -29,6 +30,7 @@ export function createApp() {
   app.use("/api/booking", bookingRoutes);
   app.use("/api/superadmin", superadminRoutes);
   app.use("/api/quadra", quadraSettingsRoutes);
+  app.use("/api/reservas", bookingsAdminRoutes);
 
   app.use(errorHandler);
 

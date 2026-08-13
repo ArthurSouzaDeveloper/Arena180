@@ -8,6 +8,7 @@ import { ProductsPage } from "./pages/ProductsPage";
 import { NewRachaPage } from "./pages/NewRachaPage";
 import { RachaHistoryPage } from "./pages/RachaHistoryPage";
 import { CourtsPage } from "./pages/CourtsPage";
+import { ReservationsPage } from "./pages/ReservationsPage";
 import { PublicBookingPage } from "./pages/PublicBookingPage";
 import { CancelBookingPage } from "./pages/CancelBookingPage";
 import { SuperadminPage } from "./pages/SuperadminPage";
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/produtos" element={<ProductsPage />} />
           <Route path="/quadras" element={<CourtsPage />} />
+          <Route path="/reservas" element={<ReservationsPage />} />
           <Route path="/rachas/nova" element={<NewRachaPage />} />
           <Route path="/rachas" element={<RachaHistoryPage />} />
         </Route>

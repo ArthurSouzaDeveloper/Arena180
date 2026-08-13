@@ -5,6 +5,7 @@ const links = [
   { to: "/", label: "Painel", end: true },
   { to: "/produtos", label: "Produtos" },
   { to: "/quadras", label: "Quadras" },
+  { to: "/reservas", label: "Reservas" },
   { to: "/rachas/nova", label: "Nova racha" },
   { to: "/rachas", label: "Histórico" },
 ];
