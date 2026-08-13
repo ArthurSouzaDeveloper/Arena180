@@ -15,6 +15,15 @@ model Quadra {
   mercadoPagoAccessToken String?  @map("mercado_pago_access_token")
   allowDepositPayment    Boolean  @default(true) @map("allow_deposit_payment")
   allowFullPayment       Boolean  @default(false) @map("allow_full_payment")
+
+  whatsappAccessToken       String?  @map("whatsapp_access_token")
+  whatsappPhoneNumberId     String?  @map("whatsapp_phone_number_id")
+  adminNotificationPhone    String?  @map("admin_notification_phone")
+  notifyBookingConfirmation Boolean  @default(true) @map("notify_booking_confirmation")
+  notifyBookingReminder     Boolean  @default(true) @map("notify_booking_reminder")
+  notifyMensalistaRenewal   Boolean  @default(true) @map("notify_mensalista_renewal")
+  notifyNewAvulsaBooking    Boolean  @default(true) @map("notify_new_avulsa_booking")
+
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
@@ -173,6 +182,7 @@ model Booking {
   paymentMode    PaymentMode?  @map("payment_mode")
   pixPaymentId   String?       @map("pix_payment_id")
   holdExpiresAt  DateTime?     @map("hold_expires_at")
+  reminderSentAt DateTime?     @map("reminder_sent_at")
   createdAt      DateTime      @default(now())
 
   court Court @relation(fields: [courtId], references: [id], onDelete: Cascade)

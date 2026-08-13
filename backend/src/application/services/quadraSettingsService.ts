@@ -10,6 +10,25 @@ function toPaymentSettings(quadra: { mercadoPagoAccessToken: string | null; allo
   };
 }
 
+function toWhatsappSettings(quadra: {
+  whatsappAccessToken: string | null;
+  whatsappPhoneNumberId: string | null;
+  adminNotificationPhone: string | null;
+  notifyBookingConfirmation: boolean;
+  notifyBookingReminder: boolean;
+  notifyMensalistaRenewal: boolean;
+  notifyNewAvulsaBooking: boolean;
+}) {
+  return {
+    whatsappEnabled: Boolean(quadra.whatsappAccessToken && quadra.whatsappPhoneNumberId),
+    adminNotificationPhone: quadra.adminNotificationPhone,
+    notifyBookingConfirmation: quadra.notifyBookingConfirmation,
+    notifyBookingReminder: quadra.notifyBookingReminder,
+    notifyMensalistaRenewal: quadra.notifyMensalistaRenewal,
+    notifyNewAvulsaBooking: quadra.notifyNewAvulsaBooking,
+  };
+}
+
 export const quadraSettingsService = {
   async getPaymentSettings(quadraId: string) {
     const quadra = await prisma.quadra.findUniqueOrThrow({ where: { id: quadraId } });
@@ -39,6 +58,51 @@ export const quadraSettingsService = {
       },
     });
     return toPaymentSettings(quadra);
+  },
+
+  async getWhatsappSettings(quadraId: string) {
+    const quadra = await prisma.quadra.findUniqueOrThrow({ where: { id: quadraId } });
+    return toWhatsappSettings(quadra);
+  },
+
+  async saveWhatsappCredentials(quadraId: string, accessToken: string, phoneNumberId: string) {
+    const encrypted = encryptToken(accessToken);
+    const quadra = await prisma.quadra.update({
+      where: { id: quadraId },
+      data: { whatsappAccessToken: encrypted, whatsappPhoneNumberId: phoneNumberId },
+    });
+    return toWhatsappSettings(quadra);
+  },
+
+  async removeWhatsappCredentials(quadraId: string) {
+    const quadra = await prisma.quadra.update({
+      where: { id: quadraId },
+      data: { whatsappAccessToken: null, whatsappPhoneNumberId: null },
+    });
+    return toWhatsappSettings(quadra);
+  },
+
+  async updateNotificationSettings(
+    quadraId: string,
+    options: {
+      adminNotificationPhone?: string | null;
+      notifyBookingConfirmation: boolean;
+      notifyBookingReminder: boolean;
+      notifyMensalistaRenewal: boolean;
+      notifyNewAvulsaBooking: boolean;
+    },
+  ) {
+    const quadra = await prisma.quadra.update({
+      where: { id: quadraId },
+      data: {
+        adminNotificationPhone: options.adminNotificationPhone,
+        notifyBookingConfirmation: options.notifyBookingConfirmation,
+        notifyBookingReminder: options.notifyBookingReminder,
+        notifyMensalistaRenewal: options.notifyMensalistaRenewal,
+        notifyNewAvulsaBooking: options.notifyNewAvulsaBooking,
+      },
+    });
+    return toWhatsappSettings(quadra);
   },
 };
 

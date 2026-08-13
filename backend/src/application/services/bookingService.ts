@@ -5,6 +5,7 @@ import { addMinutes, overlaps } from "../../domain/time";
 import { decryptQuadraAccessToken } from "./quadraSettingsService";
 import { mercadoPagoClient } from "../../infrastructure/mercadoPago/mercadoPagoClient";
 import { env } from "../../config/env";
+import { notificationService } from "./notificationService";
 
 const CANCEL_MIN_HOURS_BEFORE = 24;
 const DEPOSIT_RATE = 0.2;
@@ -76,6 +77,26 @@ async function expireStaleHolds(courtId: string, dateValue?: Date) {
 
 function payerEmailFor(bookingId: string) {
   return `reserva-${bookingId}@gestquadra.app`;
+}
+
+function formatDateBR(date: Date) {
+  return date.toISOString().slice(0, 10).split("-").reverse().join("/");
+}
+
+async function notifyBookingConfirmed(
+  quadra: Parameters<typeof notificationService.sendBookingConfirmation>[0] &
+    Parameters<typeof notificationService.sendNewAvulsaBookingAlert>[0],
+  booking: { customerName: string; customerPhone: string; date: Date; startTime: string },
+  courtName: string,
+) {
+  const payload = {
+    customerName: booking.customerName,
+    customerPhone: booking.customerPhone,
+    date: formatDateBR(booking.date),
+    startTime: booking.startTime,
+  };
+  await notificationService.sendBookingConfirmation(quadra, payload, courtName);
+  await notificationService.sendNewAvulsaBookingAlert(quadra, payload, courtName);
 }
 
 export const bookingService = {
@@ -252,6 +273,7 @@ export const bookingService = {
     }
 
     if (!pixEnabled) {
+      await notifyBookingConfirmed(quadra, booking, court.name);
       return { ...booking, pix: null };
     }
 
@@ -299,6 +321,7 @@ export const bookingService = {
 
     if (payment.status === "approved") {
       await prisma.booking.update({ where: { id: booking.id }, data: { status: "CONFIRMADA" } });
+      await notifyBookingConfirmed(quadra, booking, booking.court.name);
       return { status: "CONFIRMADA", expired: false };
     }
 
@@ -316,6 +339,7 @@ export const bookingService = {
 
     const booking = await prisma.booking.findFirst({
       where: { pixPaymentId: paymentId, court: { quadraId: quadra.id } },
+      include: { court: { select: { name: true } } },
     });
     if (!booking || booking.status !== "PENDENTE_PAGAMENTO") return;
 
@@ -324,6 +348,7 @@ export const bookingService = {
 
     if (payment.status === "approved") {
       await prisma.booking.update({ where: { id: booking.id }, data: { status: "CONFIRMADA" } });
+      await notifyBookingConfirmed(quadra, booking, booking.court.name);
     } else if (payment.status === "cancelled" || payment.status === "rejected") {
       await prisma.booking.update({ where: { id: booking.id }, data: { status: "CANCELADA" } });
     }
