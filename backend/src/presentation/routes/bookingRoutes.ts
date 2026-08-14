@@ -71,6 +71,27 @@ router.get(
   }),
 );
 
+const phoneQuerySchema = z.object({ phone: z.string().min(1) });
+const phoneBodySchema = z.object({ phone: z.string().min(1) });
+
+router.get(
+  "/:quadraSlug/my-bookings",
+  asyncHandler(async (req, res) => {
+    const { phone } = phoneQuerySchema.parse(req.query);
+    const bookings = await bookingService.findByPhone(req.params.quadraSlug, phone);
+    res.json(bookings);
+  }),
+);
+
+router.post(
+  "/:quadraSlug/my-bookings/:bookingId/cancel",
+  asyncHandler(async (req, res) => {
+    const { phone } = phoneBodySchema.parse(req.body);
+    const booking = await bookingService.cancelByPhone(req.params.quadraSlug, req.params.bookingId, phone);
+    res.json(booking);
+  }),
+);
+
 router.post(
   "/:quadraSlug/pix-webhook",
   asyncHandler(async (req, res) => {

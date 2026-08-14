@@ -11,6 +11,7 @@ import { CourtsPage } from "./pages/CourtsPage";
 import { ReservationsPage } from "./pages/ReservationsPage";
 import { PublicBookingPage } from "./pages/PublicBookingPage";
 import { CancelBookingPage } from "./pages/CancelBookingPage";
+import { MyBookingsPage } from "./pages/MyBookingsPage";
 import { SuperadminPage } from "./pages/SuperadminPage";
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/agendar/:slug" element={<PublicBookingPage />} />
       <Route path="/agendar/:slug/cancelar/:bookingId" element={<CancelBookingPage />} />
+      <Route path="/agendar/:slug/minhas-reservas" element={<MyBookingsPage />} />
       <Route element={<SuperadminRoute />}>
         <Route path="/superadmin" element={<SuperadminPage />} />
       </Route>

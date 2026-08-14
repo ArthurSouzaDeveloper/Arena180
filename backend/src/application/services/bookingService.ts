@@ -79,6 +79,10 @@ function payerEmailFor(bookingId: string) {
   return `reserva-${bookingId}@gestquadra.app`;
 }
 
+function normalizePhone(phone: string) {
+  return phone.replace(/\D/g, "");
+}
+
 function formatDateBR(date: Date) {
   return date.toISOString().slice(0, 10).split("-").reverse().join("/");
 }
@@ -362,6 +366,52 @@ export const bookingService = {
 
   async cancelByToken(quadraSlug: string, bookingId: string, token: string) {
     const booking = await findBookingByToken(quadraSlug, bookingId, token);
+
+    if (booking.status === "CANCELADA") {
+      throw new AppError("Essa reserva já está cancelada");
+    }
+
+    if (booking.status === "CONFIRMADA" && hoursUntilStart(booking) < CANCEL_MIN_HOURS_BEFORE) {
+      throw new AppError(
+        `O cancelamento só pode ser feito até ${CANCEL_MIN_HOURS_BEFORE}h antes do horário reservado`,
+      );
+    }
+
+    return prisma.booking.update({ where: { id: booking.id }, data: { status: "CANCELADA" } });
+  },
+
+  async findByPhone(quadraSlug: string, phone: string) {
+    const quadra = await findQuadraBySlug(quadraSlug);
+    const normalized = normalizePhone(phone);
+    if (!normalized) {
+      throw new AppError("Informe um telefone válido");
+    }
+
+    const bookings = await prisma.booking.findMany({
+      where: { court: { quadraId: quadra.id } },
+      include: { court: { select: { name: true } } },
+      orderBy: [{ date: "desc" }, { startTime: "desc" }],
+    });
+
+    const matches = bookings.filter((b) => normalizePhone(b.customerPhone) === normalized);
+
+    return matches.map((booking) => ({
+      ...booking,
+      cancellable: booking.status === "CONFIRMADA" && hoursUntilStart(booking) >= CANCEL_MIN_HOURS_BEFORE,
+      cancelMinHoursBefore: CANCEL_MIN_HOURS_BEFORE,
+    }));
+  },
+
+  async cancelByPhone(quadraSlug: string, bookingId: string, phone: string) {
+    const quadra = await findQuadraBySlug(quadraSlug);
+    const normalized = normalizePhone(phone);
+
+    const booking = await prisma.booking.findFirst({
+      where: { id: bookingId, court: { quadraId: quadra.id } },
+    });
+    if (!booking || normalizePhone(booking.customerPhone) !== normalized) {
+      throw new NotFoundError("Reserva não encontrada");
+    }
 
     if (booking.status === "CANCELADA") {
       throw new AppError("Essa reserva já está cancelada");

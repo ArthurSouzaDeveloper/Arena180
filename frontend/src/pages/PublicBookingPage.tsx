@@ -42,6 +42,7 @@ export function PublicBookingPage() {
   const [confirmedBooking, setConfirmedBooking] = useState<Booking | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [paymentExpired, setPaymentExpired] = useState(false);
+  const [pixCopied, setPixCopied] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -167,6 +168,13 @@ export function PublicBookingPage() {
           <h1 className="pb-title">{arenaName ?? " "}</h1>
           <div className="pb-rule" />
           <p className="pb-subtitle">Reserve seu horário em menos de um minuto.</p>
+          {slug && (
+            <p className="pb-foot-note" style={{ marginTop: "0.85rem" }}>
+              <Link to={`/agendar/${slug}/minhas-reservas`} style={{ color: "var(--pb-accent)", fontWeight: 600 }}>
+                Já reservou? Veja suas reservas
+              </Link>
+            </p>
+          )}
         </header>
 
         {courts.length === 0 && <p className="pb-empty">Nenhuma quadra disponível para agendamento.</p>}
@@ -217,6 +225,35 @@ export function PublicBookingPage() {
                   alt="QR Code do Pix"
                   style={{ maxWidth: "220px", margin: "0.75rem auto", display: "block" }}
                 />
+                <p className="pb-note-muted" style={{ marginBottom: "0.35rem" }}>
+                  Ou copie o código abaixo e cole na área "Pix Copia e Cola" do aplicativo do seu banco:
+                </p>
+                <div className="pb-pix-copy-row">
+                  <input readOnly value={confirmedBooking.pix.qrCode} onFocus={(e) => e.target.select()} />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const text = confirmedBooking.pix!.qrCode;
+                      if (navigator.clipboard && window.isSecureContext) {
+                        navigator.clipboard.writeText(text);
+                      } else {
+                        const textarea = document.createElement("textarea");
+                        textarea.value = text;
+                        textarea.style.position = "fixed";
+                        textarea.style.opacity = "0";
+                        document.body.appendChild(textarea);
+                        textarea.focus();
+                        textarea.select();
+                        document.execCommand("copy");
+                        document.body.removeChild(textarea);
+                      }
+                      setPixCopied(true);
+                      setTimeout(() => setPixCopied(false), 2000);
+                    }}
+                  >
+                    {pixCopied ? "Copiado!" : "Copiar"}
+                  </button>
+                </div>
                 <p className="pb-note-muted">Aguardando confirmação do pagamento...</p>
               </div>
             )}
@@ -272,7 +309,7 @@ export function PublicBookingPage() {
                     <button
                       key={slot.startTime}
                       disabled={!slot.available}
-                      onClick={() => setSelectedSlot(slot.startTime)}
+                      onClick={() => setSelectedSlot((prev) => (prev === slot.startTime ? null : slot.startTime))}
                       className={`pb-slot ${selectedSlot === slot.startTime ? "pb-slot-selected" : ""}`}
                     >
                       {slot.startTime}
@@ -361,7 +398,6 @@ export function PublicBookingPage() {
                     ? `Confirmar reserva — pagar ${currencyFormatter.format(amountDueNow)} agora`
                     : `Confirmar reserva — ${currencyFormatter.format(totalPrice)}`}
                 </button>
-                <p className="pb-foot-note">Sem necessidade de login</p>
               </div>
             )}
           </>
