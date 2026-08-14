@@ -1,11 +1,12 @@
 import { prisma } from "../../config/database";
 import { notificationService } from "../../application/services/notificationService";
+import { toBrazilDateTime } from "../../domain/time";
 
 const REMINDER_LEAD_HOURS = 3;
 const SWEEP_INTERVAL_MS = 5 * 60 * 1000;
 
 function hoursUntil(date: Date, startTime: string) {
-  const startsAt = new Date(`${date.toISOString().slice(0, 10)}T${startTime}:00`);
+  const startsAt = toBrazilDateTime(date.toISOString().slice(0, 10), startTime);
   return (startsAt.getTime() - Date.now()) / (1000 * 60 * 60);
 }
 

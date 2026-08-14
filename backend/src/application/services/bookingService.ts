@@ -1,7 +1,7 @@
 import { BookingStatus, Prisma } from "@prisma/client";
 import { prisma } from "../../config/database";
 import { AppError, ConflictError, NotFoundError } from "../../domain/errors";
-import { addMinutes, overlaps } from "../../domain/time";
+import { addMinutes, overlaps, toBrazilDateTime } from "../../domain/time";
 import { decryptQuadraAccessToken } from "./quadraSettingsService";
 import { mercadoPagoClient } from "../../infrastructure/mercadoPago/mercadoPagoClient";
 import { env } from "../../config/env";
@@ -39,7 +39,7 @@ async function findActiveCourt(quadraId: string, courtId: string) {
 }
 
 function weekdayOf(date: string) {
-  return new Date(`${date}T00:00:00`).getDay();
+  return toBrazilDateTime(date).getDay();
 }
 
 async function findBookingByToken(quadraSlug: string, bookingId: string, token: string) {
@@ -55,7 +55,7 @@ async function findBookingByToken(quadraSlug: string, bookingId: string, token: 
 }
 
 function hoursUntilStart(booking: { date: Date; startTime: string }) {
-  const startsAt = new Date(`${booking.date.toISOString().slice(0, 10)}T${booking.startTime}:00`);
+  const startsAt = toBrazilDateTime(booking.date.toISOString().slice(0, 10), booking.startTime);
   return (startsAt.getTime() - Date.now()) / (1000 * 60 * 60);
 }
 
@@ -64,7 +64,7 @@ function isHoldExpired(booking: { status: string; holdExpiresAt: Date | null }) 
 }
 
 function hasStartTimePassed(date: string, startTime: string) {
-  return new Date(`${date}T${startTime}:00`) <= new Date();
+  return toBrazilDateTime(date, startTime) <= new Date();
 }
 
 async function expireStaleHolds(courtId: string, dateValue?: Date) {

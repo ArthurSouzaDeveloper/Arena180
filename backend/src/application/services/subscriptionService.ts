@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../config/database";
 import { AppError, ConflictError, NotFoundError } from "../../domain/errors";
-import { addMinutes, overlaps } from "../../domain/time";
+import { addMinutes, overlaps, toBrazilDateTime } from "../../domain/time";
 import { decryptQuadraAccessToken } from "./quadraSettingsService";
 import { mercadoPagoClient } from "../../infrastructure/mercadoPago/mercadoPagoClient";
 import { env } from "../../config/env";
@@ -24,8 +24,9 @@ interface CreateSubscriptionInput {
   customerPhone: string;
 }
 
-function toDateOnly(date: Date) {
-  return new Date(date.toISOString().slice(0, 10));
+function todayBrazil(): Date {
+  const brazilNow = new Date(Date.now() - 3 * 60 * 60 * 1000);
+  return new Date(brazilNow.toISOString().slice(0, 10));
 }
 
 function addDays(date: Date, days: number) {
@@ -90,12 +91,12 @@ async function computeQuote(courtId: string, weekday: number, startTime: string)
     throw new AppError("Fora do horário de funcionamento da quadra");
   }
 
-  const today = toDateOnly(new Date());
+  const today = todayBrazil();
   const now = new Date();
   let dates = occurrenceDatesInWindow(weekday, today, CYCLE_DAYS);
   dates = dates.filter((d) => {
     if (dateToIso(d) !== dateToIso(today)) return true;
-    const startsAt = new Date(`${dateToIso(d)}T${startTime}:00`);
+    const startsAt = toBrazilDateTime(dateToIso(d), startTime);
     return startsAt > now;
   });
 
@@ -410,7 +411,7 @@ export const subscriptionService = {
   },
 
   async cancelSubscription(subscriptionId: string) {
-    const today = toDateOnly(new Date());
+    const today = todayBrazil();
     await prisma.$transaction([
       prisma.subscription.update({ where: { id: subscriptionId }, data: { status: "CANCELADA" } }),
       prisma.booking.updateMany({
@@ -449,7 +450,7 @@ export const subscriptionService = {
   },
 
   async extendOccurrences() {
-    const today = toDateOnly(new Date());
+    const today = todayBrazil();
     const active = await prisma.subscription.findMany({ where: { status: "ATIVA" } });
 
     for (const sub of active) {
@@ -497,17 +498,17 @@ export const subscriptionService = {
   },
 
   async sendRenewalNotices() {
-    const today = new Date();
+    const today = todayBrazil();
     const active = await prisma.subscription.findMany({
       where: { status: "ATIVA" },
       include: { court: { include: { quadra: true } } },
     });
 
     for (const sub of active) {
-      const daysSinceStart = daysBetween(sub.cycleStartDate, toDateOnly(today));
+      const daysSinceStart = daysBetween(sub.cycleStartDate, today);
       const cycleIndex = Math.floor(daysSinceStart / CYCLE_DAYS);
       const currentCycleStart = addDays(sub.cycleStartDate, cycleIndex * CYCLE_DAYS);
-      const daysIntoCycle = daysBetween(currentCycleStart, toDateOnly(today));
+      const daysIntoCycle = daysBetween(currentCycleStart, today);
 
       if (daysIntoCycle < RENEWAL_NOTICE_DAYS) continue;
       if (sub.lastRenewalNoticeCycleStart && dateToIso(sub.lastRenewalNoticeCycleStart) === dateToIso(currentCycleStart)) {
