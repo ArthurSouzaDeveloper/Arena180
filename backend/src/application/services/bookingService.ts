@@ -63,6 +63,10 @@ function isHoldExpired(booking: { status: string; holdExpiresAt: Date | null }) 
   return booking.status === "PENDENTE_PAGAMENTO" && !!booking.holdExpiresAt && booking.holdExpiresAt < new Date();
 }
 
+function hasStartTimePassed(date: string, startTime: string) {
+  return new Date(`${date}T${startTime}:00`) <= new Date();
+}
+
 async function expireStaleHolds(courtId: string, dateValue?: Date) {
   await prisma.booking.updateMany({
     where: {
@@ -76,7 +80,7 @@ async function expireStaleHolds(courtId: string, dateValue?: Date) {
 }
 
 function payerEmailFor(bookingId: string) {
-  return `reserva-${bookingId}@gestquadra.app`;
+  return `reserva-${bookingId}@arena180.app`;
 }
 
 function normalizePhone(phone: string) {
@@ -165,7 +169,8 @@ export const bookingService = {
 
       const blocked = partialBlocks.some((b) => overlaps(cursor, end, b.startTime!, b.endTime!));
       const booked = bookings.some((b) => overlaps(cursor, end, b.startTime, b.endTime));
-      slots.push({ startTime: cursor, endTime: end, available: !blocked && !booked });
+      const passed = hasStartTimePassed(date, cursor);
+      slots.push({ startTime: cursor, endTime: end, available: !blocked && !booked && !passed });
       cursor = end;
     }
 
@@ -197,6 +202,10 @@ export const bookingService = {
 
     if (input.startTime < hours.openTime || endTime <= input.startTime || endTime > hours.closeTime) {
       throw new AppError("Fora do horário de funcionamento da quadra");
+    }
+
+    if (hasStartTimePassed(input.date, input.startTime)) {
+      throw new AppError("Esse horário já passou. Escolha outro.");
     }
 
     const totalPrice = Number(court.hourlyRate) + (withExtraBlock ? Number(court.extraBlockPrice ?? 0) : 0);

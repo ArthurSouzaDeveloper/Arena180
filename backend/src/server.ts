@@ -6,7 +6,7 @@ import { startSubscriptionScheduler } from "./infrastructure/scheduler/subscript
 const app = createApp();
 
 app.listen(env.port, () => {
-  console.log(`GestQuadra API rodando em http://localhost:${env.port}`);
+  console.log(`Arena180 API rodando em http://localhost:${env.port}`);
   startReminderScheduler();
   startSubscriptionScheduler();
 });

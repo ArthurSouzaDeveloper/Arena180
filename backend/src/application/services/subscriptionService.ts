@@ -71,7 +71,7 @@ async function findActiveCourt(quadraId: string, courtId: string) {
 }
 
 function payerEmailFor(subscriptionId: string) {
-  return `mensalista-${subscriptionId}@gestquadra.app`;
+  return `mensalista-${subscriptionId}@arena180.app`;
 }
 
 async function computeQuote(courtId: string, weekday: number, startTime: string) {

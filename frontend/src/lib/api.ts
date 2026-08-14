@@ -5,7 +5,7 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("gestquadra:token");
+  const token = localStorage.getItem("arena180:token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -16,7 +16,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("gestquadra:token");
+      localStorage.removeItem("arena180:token");
       if (window.location.pathname !== "/login") {
         window.location.href = "/login";
       }

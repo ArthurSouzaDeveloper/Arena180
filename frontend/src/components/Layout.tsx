@@ -17,7 +17,7 @@ export function Layout() {
     <div className="min-h-screen pb-16 sm:flex sm:pb-0">
       <aside className="hidden shrink-0 flex-col bg-sidebar px-4 py-6 text-white sm:flex sm:w-56">
         <div className="mb-5 min-w-0 border-b border-white/10 pb-5">
-          <p className="font-semibold">GestQuadra</p>
+          <p className="font-semibold">Arena180</p>
           <p className="mt-0.5 truncate text-xs text-sidebar-muted">{quadra?.name}</p>
         </div>
 
@@ -54,7 +54,7 @@ export function Layout() {
       <header className="border-b bg-white sm:hidden">
         <div className="flex items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">
-            <p className="font-semibold text-primary-700">GestQuadra</p>
+            <p className="font-semibold text-primary-700">Arena180</p>
             <p className="truncate text-xs text-gray-500">{quadra?.name}</p>
           </div>
           <div className="flex items-center gap-3 text-sm text-gray-600">

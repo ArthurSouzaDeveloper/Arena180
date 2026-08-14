@@ -75,7 +75,7 @@ export function SuperadminPage() {
       <header className="border-b bg-white">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
           <div>
-            <p className="font-semibold text-primary-700">GestQuadra · Superadmin</p>
+            <p className="font-semibold text-primary-700">Arena180 · Superadmin</p>
             <p className="text-xs text-gray-500">{user?.name}</p>
           </div>
           <button onClick={logout} className="rounded bg-gray-100 px-3 py-1 text-sm hover:bg-gray-200">

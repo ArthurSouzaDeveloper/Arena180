@@ -1,4 +1,4 @@
-# GestQuadra
+# Arena180
 
 Sistema de gestão para donos de quadras de society: controle de rachas, calculadora
 automática de rateio entre jogadores e catálogo de produtos (bebidas/comidas) com foto.

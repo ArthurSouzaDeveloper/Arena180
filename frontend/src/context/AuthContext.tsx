@@ -18,7 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("gestquadra:token");
+    const token = localStorage.getItem("arena180:token");
     if (!token) {
       setLoading(false);
       return;
@@ -31,20 +31,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setQuadra(res.data.quadra);
       })
       .catch(() => {
-        localStorage.removeItem("gestquadra:token");
+        localStorage.removeItem("arena180:token");
       })
       .finally(() => setLoading(false));
   }, []);
 
   async function login(email: string, password: string) {
     const res = await api.post("/auth/login", { email, password });
-    localStorage.setItem("gestquadra:token", res.data.token);
+    localStorage.setItem("arena180:token", res.data.token);
     setUser(res.data.user);
     setQuadra(res.data.quadra);
   }
 
   function logout() {
-    localStorage.removeItem("gestquadra:token");
+    localStorage.removeItem("arena180:token");
     setUser(null);
     setQuadra(null);
   }

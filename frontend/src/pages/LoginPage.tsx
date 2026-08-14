@@ -29,7 +29,7 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-lg border bg-white p-6 shadow-sm">
-        <h1 className="mb-1 text-xl font-bold text-primary-700">GestQuadra</h1>
+        <h1 className="mb-1 text-xl font-bold text-primary-700">Arena180</h1>
         <p className="mb-6 text-sm text-gray-500">Acesso do dono da quadra</p>
 
         <label className="mb-1 block text-sm font-medium text-gray-700">E-mail</label>
