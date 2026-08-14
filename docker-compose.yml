@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: arena180
+      POSTGRES_PASSWORD: arena180
+      POSTGRES_DB: arena180
+    ports:
+      - "5432:5432"
+    volumes:
+      - arena180-db-data:/var/lib/postgresql/data
+
+volumes:
+  arena180-db-data:
