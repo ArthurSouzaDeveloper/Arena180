@@ -1,6 +1,9 @@
 import { prisma } from "../../config/database";
 import { decryptQuadraAccessToken } from "./quadraSettingsService";
 import { whatsappClient } from "../../infrastructure/whatsapp/whatsappClient";
+import { logger } from "../../infrastructure/logging/logger";
+
+const log = logger.child({ component: "notificationService" });
 
 const TEMPLATES = {
   bookingConfirmation: "reserva_confirmada",
@@ -31,7 +34,10 @@ async function sendSafely(quadra: QuadraWhatsappConfig, to: string, templateName
       bodyParams,
     });
   } catch (err) {
-    console.error(`Falha ao enviar notificação WhatsApp (${templateName}):`, err);
+    // Deliberately not logging `to` (customer/admin phone number) — personal
+    // data doesn't belong in operational logs, and it isn't needed to
+    // diagnose a delivery failure.
+    log.error({ err, templateName }, "Falha ao enviar notificação WhatsApp");
   }
 }
 

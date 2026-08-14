@@ -1,9 +1,11 @@
 import { prisma } from "../../config/database";
 import { notificationService } from "../../application/services/notificationService";
 import { toBrazilDateTime } from "../../domain/time";
+import { logger } from "../logging/logger";
 
 const REMINDER_LEAD_HOURS = 3;
 const SWEEP_INTERVAL_MS = 5 * 60 * 1000;
+const log = logger.child({ component: "reminderScheduler" });
 
 function hoursUntil(date: Date, startTime: string) {
   const startsAt = toBrazilDateTime(date.toISOString().slice(0, 10), startTime);
@@ -40,6 +42,6 @@ export async function runReminderSweep() {
 
 export function startReminderScheduler() {
   setInterval(() => {
-    runReminderSweep().catch((err) => console.error("Falha na rotina de lembrete:", err));
+    runReminderSweep().catch((err) => log.error({ err }, "Falha na rotina de lembrete"));
   }, SWEEP_INTERVAL_MS);
 }

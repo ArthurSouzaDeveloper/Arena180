@@ -1,8 +1,11 @@
 import cors from "cors";
 import express from "express";
+import helmet from "helmet";
 import path from "path";
 import { env } from "./config/env";
 import { errorHandler } from "./presentation/middlewares/errorHandler";
+import { apiRateLimit, loginRateLimit } from "./presentation/middlewares/rateLimit";
+import { requestLogger } from "./presentation/middlewares/requestLogger";
 import authRoutes from "./presentation/routes/authRoutes";
 import productRoutes from "./presentation/routes/productRoutes";
 import rachaRoutes from "./presentation/routes/rachaRoutes";
@@ -16,11 +19,20 @@ import bookingsAdminRoutes from "./presentation/routes/bookingsAdminRoutes";
 export function createApp() {
   const app = express();
 
+  // Required so express-rate-limit and audit logs see the real client IP
+  // (X-Forwarded-For) instead of the nginx reverse-proxy's own address.
+  app.set("trust proxy", 1);
+
+  app.use(requestLogger);
+  app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
   app.use(cors({ origin: env.corsOrigin }));
   app.use(express.json());
   app.use("/uploads", express.static(path.resolve(process.cwd(), env.uploadsDir)));
 
   app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
+
+  app.use(apiRateLimit);
+  app.use("/api/auth/login", loginRateLimit);
 
   app.use("/api/auth", authRoutes);
   app.use("/api/products", productRoutes);

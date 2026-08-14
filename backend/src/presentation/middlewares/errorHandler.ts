@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
 import { AppError } from "../../domain/errors";
 
-export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction) {
+export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction) {
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({ message: err.message });
   }
@@ -12,7 +12,11 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
     return res.status(400).json({ message });
   }
 
-  console.error(err);
+  // Anything reaching here is unexpected — pino-http's own request-completion
+  // log already records this response as an error (5xx), so this adds the
+  // actual stack trace/cause under the same requestId for correlation,
+  // without ever handing that stack trace back to the client.
+  req.log?.error({ err }, "Unhandled error");
   return res.status(500).json({ message: "Erro interno do servidor" });
 }
 

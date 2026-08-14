@@ -3,7 +3,7 @@ import { z } from "zod";
 import { productService } from "../../application/services/productService";
 import { asyncHandler } from "../middlewares/errorHandler";
 import { authMiddleware, ownerMiddleware } from "../middlewares/auth";
-import { upload } from "../../config/upload";
+import { upload, saveValidatedImage } from "../../config/upload";
 
 const router = Router();
 
@@ -33,7 +33,7 @@ router.post(
   upload.single("photo"),
   asyncHandler(async (req, res) => {
     const { name, price } = createSchema.parse(req.body);
-    const photoUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
+    const photoUrl = req.file ? saveValidatedImage(req.file) : undefined;
     const product = await productService.create({ quadraId: req.auth!.quadraId!, name, price, photoUrl });
     res.status(201).json(product);
   }),
@@ -44,7 +44,7 @@ router.put(
   upload.single("photo"),
   asyncHandler(async (req, res) => {
     const data = updateSchema.parse(req.body);
-    const photoUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
+    const photoUrl = req.file ? saveValidatedImage(req.file) : undefined;
     const product = await productService.update(req.params.id, req.auth!.quadraId!, {
       ...data,
       ...(photoUrl ? { photoUrl } : {}),

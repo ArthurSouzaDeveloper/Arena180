@@ -17,7 +17,7 @@ const createArenaSchema = z.object({
     .regex(/^[a-z0-9-]+$/, "Use apenas letras minúsculas, números e hífen"),
   adminName: z.string().min(1),
   adminEmail: z.string().email(),
-  adminPassword: z.string().min(6),
+  adminPassword: z.string().min(10, "A senha deve ter pelo menos 10 caracteres"),
 });
 
 const activeSchema = z.object({

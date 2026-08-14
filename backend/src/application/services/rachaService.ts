@@ -1,5 +1,5 @@
 import { prisma } from "../../config/database";
-import { NotFoundError } from "../../domain/errors";
+import { AppError, NotFoundError } from "../../domain/errors";
 
 interface RachaItemInput {
   productId?: string;
@@ -47,7 +47,15 @@ export const rachaService = {
     return calculateTotals(courtValue, items, playersCount);
   },
 
-  create({ quadraId, courtValue, playersCount, playedAt, items }: CreateRachaInput) {
+  async create({ quadraId, courtValue, playersCount, playedAt, items }: CreateRachaInput) {
+    const productIds = items.map((item) => item.productId).filter((id): id is string => Boolean(id));
+    if (productIds.length > 0) {
+      const owned = await prisma.product.count({ where: { id: { in: productIds }, quadraId } });
+      if (owned !== new Set(productIds).size) {
+        throw new AppError("Um ou mais produtos informados não pertencem a esta arena");
+      }
+    }
+
     const { totalValue, valuePerHead } = calculateTotals(courtValue, items, playersCount);
 
     return prisma.racha.create({

@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../../config/env";
 import { UnauthorizedError } from "../../domain/errors";
+import { prisma } from "../../config/database";
 
 export interface AuthPayload {
   userId: string;
@@ -37,9 +38,26 @@ export function authMiddleware(req: Request, _res: Response, next: NextFunction)
 
 export function ownerMiddleware(req: Request, _res: Response, next: NextFunction) {
   if (req.auth?.role !== "OWNER" || !req.auth.quadraId) {
-    throw new UnauthorizedError("Acesso restrito ao dono da arena");
+    next(new UnauthorizedError("Acesso restrito ao dono da arena"));
+    return;
   }
-  next();
+
+  // A JWT stays valid until it expires (up to 7 days) regardless of what
+  // happens to the arena afterwards. Without this check, a superadmin
+  // deactivating an arena wouldn't actually revoke an owner's in-flight
+  // session — they could keep managing courts/bookings for up to a week.
+  // Express 4 doesn't await middleware, so this must forward rejections
+  // to next() explicitly rather than relying on an async throw.
+  prisma.quadra
+    .findUnique({ where: { id: req.auth.quadraId }, select: { active: true } })
+    .then((quadra) => {
+      if (!quadra || !quadra.active) {
+        next(new UnauthorizedError("Esta arena está desativada. Fale com o suporte."));
+        return;
+      }
+      next();
+    })
+    .catch(next);
 }
 
 export function superadminMiddleware(req: Request, _res: Response, next: NextFunction) {
