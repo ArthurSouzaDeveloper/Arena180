@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { api } from "../lib/api";
-import { Booking, Court, CourtHours } from "../types";
+import { Booking, Court, CourtHours, Subscription } from "../types";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const WEEKDAY_LABELS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -12,6 +12,7 @@ export function CourtsPage() {
   const [slotMinutes, setSlotMinutes] = useState("60");
   const [extraBlockMinutes, setExtraBlockMinutes] = useState("");
   const [extraBlockPrice, setExtraBlockPrice] = useState("");
+  const [mensalistaHourlyRate, setMensalistaHourlyRate] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   function loadCourts() {
@@ -32,12 +33,14 @@ export function CourtsPage() {
         slotMinutes: slotMinutes ? Number(slotMinutes) : undefined,
         extraBlockMinutes: extraBlockMinutes ? Number(extraBlockMinutes) : undefined,
         extraBlockPrice: extraBlockPrice ? Number(extraBlockPrice) : undefined,
+        mensalistaHourlyRate: mensalistaHourlyRate ? Number(mensalistaHourlyRate) : undefined,
       });
       setName("");
       setHourlyRate("");
       setSlotMinutes("60");
       setExtraBlockMinutes("");
       setExtraBlockPrice("");
+      setMensalistaHourlyRate("");
       loadCourts();
     } finally {
       setSubmitting(false);
@@ -113,6 +116,17 @@ export function CourtsPage() {
             className="w-28 rounded border border-gray-300 px-3 py-2 text-sm"
           />
         </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Valor mensalista (opcional)</label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={mensalistaHourlyRate}
+            onChange={(e) => setMensalistaHourlyRate(e.target.value)}
+            className="w-28 rounded border border-gray-300 px-3 py-2 text-sm"
+          />
+        </div>
         <button
           type="submit"
           disabled={submitting}
@@ -162,18 +176,44 @@ function CourtCard({
   const [blockEnd, setBlockEnd] = useState("");
   const [blockReason, setBlockReason] = useState("");
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [mensalistaHourlyRate, setMensalistaHourlyRate] = useState(court.mensalistaHourlyRate ?? "");
+  const [savingMensalistaRate, setSavingMensalistaRate] = useState(false);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
 
   function loadBookings() {
     api.get(`/courts/${court.id}/bookings`).then((res) => setBookings(res.data));
   }
 
+  function loadSubscriptions() {
+    api.get(`/courts/${court.id}/subscriptions`).then((res) => setSubscriptions(res.data));
+  }
+
   useEffect(() => {
     loadBookings();
+    loadSubscriptions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [court.id]);
 
   async function cancelBooking(bookingId: string) {
     await api.put(`/courts/${court.id}/bookings/${bookingId}/cancel`);
+    loadBookings();
+  }
+
+  async function saveMensalistaRate() {
+    setSavingMensalistaRate(true);
+    try {
+      await api.put(`/courts/${court.id}`, {
+        mensalistaHourlyRate: mensalistaHourlyRate ? Number(mensalistaHourlyRate) : null,
+      });
+      onChanged();
+    } finally {
+      setSavingMensalistaRate(false);
+    }
+  }
+
+  async function cancelSubscription(subscriptionId: string) {
+    await api.put(`/courts/${court.id}/subscriptions/${subscriptionId}/cancel`);
+    loadSubscriptions();
     loadBookings();
   }
 
@@ -265,6 +305,27 @@ function CourtCard({
             className="rounded bg-gray-100 px-3 py-1.5 font-semibold hover:bg-gray-200 disabled:opacity-50"
           >
             Salvar duração
+          </button>
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <p className="mb-2 text-sm font-medium text-gray-700">Valor mensalista (deixe vazio para desativar)</p>
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={mensalistaHourlyRate}
+            onChange={(e) => setMensalistaHourlyRate(e.target.value)}
+            className="w-28 rounded border border-gray-300 px-2 py-1"
+          />
+          <button
+            onClick={saveMensalistaRate}
+            disabled={savingMensalistaRate}
+            className="rounded bg-gray-100 px-3 py-1.5 font-semibold hover:bg-gray-200 disabled:opacity-50"
+          >
+            Salvar valor mensalista
           </button>
         </div>
       </div>
@@ -400,6 +461,34 @@ function CourtCard({
                 )}
               </span>
               <button onClick={() => cancelBooking(booking.id)} className="text-xs text-red-600 hover:underline">
+                Cancelar
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="mt-4 border-t pt-4">
+        <p className="mb-2 text-sm font-medium text-gray-700">Mensalistas</p>
+        <ul className="space-y-1 text-sm">
+          {subscriptions.length === 0 && <li className="text-gray-400">Nenhum mensalista ativo.</li>}
+          {subscriptions.map((subscription) => (
+            <li key={subscription.id} className="flex items-center justify-between rounded bg-gray-50 px-2 py-1">
+              <span>
+                {WEEKDAY_LABELS[subscription.weekday]} · {subscription.startTime}–{subscription.endTime} ·{" "}
+                {subscription.customerName} ({subscription.customerPhone})
+                {subscription.status === "AGUARDANDO_PAGAMENTO" && (
+                  <span className="ml-2 rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                    Aguardando pagamento do sinal
+                  </span>
+                )}
+                {subscription.status === "ATIVA" && (
+                  <span className="ml-2 rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                    Ativo
+                  </span>
+                )}
+              </span>
+              <button onClick={() => cancelSubscription(subscription.id)} className="text-xs text-red-600 hover:underline">
                 Cancelar
               </button>
             </li>

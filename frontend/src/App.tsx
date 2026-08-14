@@ -11,6 +11,7 @@ import { CourtsPage } from "./pages/CourtsPage";
 import { ReservationsPage } from "./pages/ReservationsPage";
 import { PublicBookingPage } from "./pages/PublicBookingPage";
 import { CancelBookingPage } from "./pages/CancelBookingPage";
+import { CancelSubscriptionPage } from "./pages/CancelSubscriptionPage";
 import { MyBookingsPage } from "./pages/MyBookingsPage";
 import { SuperadminPage } from "./pages/SuperadminPage";
 
@@ -21,6 +22,7 @@ export default function App() {
       <Route path="/agendar/:slug" element={<PublicBookingPage />} />
       <Route path="/agendar/:slug/cancelar/:bookingId" element={<CancelBookingPage />} />
       <Route path="/agendar/:slug/minhas-reservas" element={<MyBookingsPage />} />
+      <Route path="/agendar/:slug/mensalista/:subscriptionId/cancelar" element={<CancelSubscriptionPage />} />
       <Route element={<SuperadminRoute />}>
         <Route path="/superadmin" element={<SuperadminPage />} />
       </Route>

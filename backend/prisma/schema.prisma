@@ -8,24 +8,24 @@ datasource db {
 }
 
 model Quadra {
-  id                     String   @id @default(uuid())
+  id                     String  @id @default(uuid())
   name                   String
-  slug                   String   @unique
-  active                 Boolean  @default(true)
-  mercadoPagoAccessToken String?  @map("mercado_pago_access_token")
-  allowDepositPayment    Boolean  @default(true) @map("allow_deposit_payment")
-  allowFullPayment       Boolean  @default(false) @map("allow_full_payment")
+  slug                   String  @unique
+  active                 Boolean @default(true)
+  mercadoPagoAccessToken String? @map("mercado_pago_access_token")
+  allowDepositPayment    Boolean @default(true) @map("allow_deposit_payment")
+  allowFullPayment       Boolean @default(false) @map("allow_full_payment")
 
-  whatsappAccessToken       String?  @map("whatsapp_access_token")
-  whatsappPhoneNumberId     String?  @map("whatsapp_phone_number_id")
-  adminNotificationPhone    String?  @map("admin_notification_phone")
-  notifyBookingConfirmation Boolean  @default(true) @map("notify_booking_confirmation")
-  notifyBookingReminder     Boolean  @default(true) @map("notify_booking_reminder")
-  notifyMensalistaRenewal   Boolean  @default(true) @map("notify_mensalista_renewal")
-  notifyNewAvulsaBooking    Boolean  @default(true) @map("notify_new_avulsa_booking")
+  whatsappAccessToken       String? @map("whatsapp_access_token")
+  whatsappPhoneNumberId     String? @map("whatsapp_phone_number_id")
+  adminNotificationPhone    String? @map("admin_notification_phone")
+  notifyBookingConfirmation Boolean @default(true) @map("notify_booking_confirmation")
+  notifyBookingReminder     Boolean @default(true) @map("notify_booking_reminder")
+  notifyMensalistaRenewal   Boolean @default(true) @map("notify_mensalista_renewal")
+  notifyNewAvulsaBooking    Boolean @default(true) @map("notify_new_avulsa_booking")
 
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   users    User[]
   products Product[]
@@ -76,16 +76,16 @@ enum RachaStatus {
 }
 
 model Racha {
-  id            String      @id @default(uuid())
-  courtValue    Decimal     @map("court_value") @db.Decimal(10, 2)
-  playersCount  Int         @map("players_count")
-  totalValue    Decimal     @map("total_value") @db.Decimal(10, 2)
-  valuePerHead  Decimal     @map("value_per_head") @db.Decimal(10, 2)
-  status        RachaStatus @default(FECHADA)
-  playedAt      DateTime    @default(now()) @map("played_at")
-  quadraId      String      @map("quadra_id")
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id           String      @id @default(uuid())
+  courtValue   Decimal     @map("court_value") @db.Decimal(10, 2)
+  playersCount Int         @map("players_count")
+  totalValue   Decimal     @map("total_value") @db.Decimal(10, 2)
+  valuePerHead Decimal     @map("value_per_head") @db.Decimal(10, 2)
+  status       RachaStatus @default(FECHADA)
+  playedAt     DateTime    @default(now()) @map("played_at")
+  quadraId     String      @map("quadra_id")
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   quadra Quadra      @relation(fields: [quadraId], references: [id], onDelete: Cascade)
   items  RachaItem[]
@@ -94,13 +94,13 @@ model Racha {
 }
 
 model RachaItem {
-  id         String   @id @default(uuid())
-  rachaId    String   @map("racha_id")
-  productId  String?  @map("product_id")
-  name       String
-  unitPrice  Decimal  @map("unit_price") @db.Decimal(10, 2)
-  quantity   Int
-  createdAt  DateTime @default(now())
+  id        String   @id @default(uuid())
+  rachaId   String   @map("racha_id")
+  productId String?  @map("product_id")
+  name      String
+  unitPrice Decimal  @map("unit_price") @db.Decimal(10, 2)
+  quantity  Int
+  createdAt DateTime @default(now())
 
   racha   Racha    @relation(fields: [rachaId], references: [id], onDelete: Cascade)
   product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
@@ -109,21 +109,23 @@ model RachaItem {
 }
 
 model Court {
-  id                String   @id @default(uuid())
-  name              String
-  quadraId          String   @map("quadra_id")
-  hourlyRate        Decimal  @map("hourly_rate") @db.Decimal(10, 2)
-  slotMinutes       Int      @default(60) @map("slot_minutes")
-  extraBlockMinutes Int      @default(0) @map("extra_block_minutes")
-  extraBlockPrice   Decimal? @map("extra_block_price") @db.Decimal(10, 2)
-  active            Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                   String   @id @default(uuid())
+  name                 String
+  quadraId             String   @map("quadra_id")
+  hourlyRate           Decimal  @map("hourly_rate") @db.Decimal(10, 2)
+  slotMinutes          Int      @default(60) @map("slot_minutes")
+  extraBlockMinutes    Int      @default(0) @map("extra_block_minutes")
+  extraBlockPrice      Decimal? @map("extra_block_price") @db.Decimal(10, 2)
+  mensalistaHourlyRate Decimal? @map("mensalista_hourly_rate") @db.Decimal(10, 2)
+  active               Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
-  quadra   Quadra       @relation(fields: [quadraId], references: [id], onDelete: Cascade)
-  hours    CourtHours[]
-  blocks   CourtBlock[]
-  bookings Booking[]
+  quadra        Quadra         @relation(fields: [quadraId], references: [id], onDelete: Cascade)
+  hours         CourtHours[]
+  blocks        CourtBlock[]
+  bookings      Booking[]
+  subscriptions Subscription[]
 
   @@map("courts")
 }
@@ -183,10 +185,42 @@ model Booking {
   pixPaymentId   String?       @map("pix_payment_id")
   holdExpiresAt  DateTime?     @map("hold_expires_at")
   reminderSentAt DateTime?     @map("reminder_sent_at")
+  subscriptionId String?       @map("subscription_id")
   createdAt      DateTime      @default(now())
 
-  court Court @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  court        Court         @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
 
   @@index([courtId, date])
   @@map("bookings")
+}
+
+enum SubscriptionStatus {
+  AGUARDANDO_PAGAMENTO
+  ATIVA
+  CANCELADA
+}
+
+model Subscription {
+  id                          String             @id @default(uuid())
+  courtId                     String             @map("court_id")
+  customerName                String             @map("customer_name")
+  customerPhone               String             @map("customer_phone")
+  weekday                     Int
+  startTime                   String             @map("start_time")
+  endTime                     String             @map("end_time")
+  pricePerOccurrence          Decimal            @map("price_per_occurrence") @db.Decimal(10, 2)
+  depositAmount               Decimal?           @map("deposit_amount") @db.Decimal(10, 2)
+  status                      SubscriptionStatus @default(AGUARDANDO_PAGAMENTO)
+  cancelToken                 String             @unique @default(uuid()) @map("cancel_token")
+  pixPaymentId                String?            @map("pix_payment_id")
+  holdExpiresAt               DateTime?          @map("hold_expires_at")
+  cycleStartDate              DateTime           @map("cycle_start_date") @db.Date
+  lastRenewalNoticeCycleStart DateTime?          @map("last_renewal_notice_cycle_start") @db.Date
+  createdAt                   DateTime           @default(now())
+
+  court    Court     @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@map("subscriptions")
 }

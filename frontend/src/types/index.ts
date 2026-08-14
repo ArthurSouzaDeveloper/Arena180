@@ -77,6 +77,7 @@ export interface Court {
   slotMinutes: number;
   extraBlockMinutes: number;
   extraBlockPrice: string | null;
+  mensalistaHourlyRate: string | null;
   active: boolean;
   hours: CourtHours[];
   blocks: CourtBlock[];
@@ -105,6 +106,7 @@ export interface PublicCourt {
   slotMinutes: number;
   extraBlockMinutes: number;
   extraBlockPrice: string | null;
+  mensalistaHourlyRate: string | null;
 }
 
 export interface PublicCourtsResponse {
@@ -139,5 +141,43 @@ export interface BookingWithCourt extends Booking {
 
 export interface PaymentStatus {
   status: "CONFIRMADA" | "CANCELADA" | "PENDENTE_PAGAMENTO";
+  expired: boolean;
+}
+
+export interface MensalistaHours {
+  open: boolean;
+  openTime?: string;
+  closeTime?: string;
+  slotMinutes?: number;
+  pricePerOccurrence?: number;
+}
+
+export interface MensalistaQuote {
+  dates: string[];
+  endTime: string;
+  pricePerOccurrence: number;
+  totalPrice: number;
+  depositAmount: number;
+}
+
+export interface Subscription {
+  id: string;
+  courtId: string;
+  customerName: string;
+  customerPhone: string;
+  weekday: number;
+  startTime: string;
+  endTime: string;
+  pricePerOccurrence: string;
+  depositAmount: string | null;
+  status: "AGUARDANDO_PAGAMENTO" | "ATIVA" | "CANCELADA";
+  cancelToken: string;
+  pix: { qrCode: string; qrCodeBase64: string } | null;
+  dates?: string[];
+  totalPrice?: number;
+}
+
+export interface SubscriptionPaymentStatus {
+  status: "AGUARDANDO_PAGAMENTO" | "ATIVA" | "CANCELADA";
   expired: boolean;
 }

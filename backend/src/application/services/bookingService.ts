@@ -116,6 +116,7 @@ export const bookingService = {
         slotMinutes: true,
         extraBlockMinutes: true,
         extraBlockPrice: true,
+        mensalistaHourlyRate: true,
       },
     });
     return {
@@ -339,13 +340,13 @@ export const bookingService = {
 
   async handlePixWebhook(quadraSlug: string, paymentId: string) {
     const quadra = await findQuadraBySlug(quadraSlug);
-    if (!quadra.mercadoPagoAccessToken) return;
+    if (!quadra.mercadoPagoAccessToken) return false;
 
     const booking = await prisma.booking.findFirst({
       where: { pixPaymentId: paymentId, court: { quadraId: quadra.id } },
       include: { court: { select: { name: true } } },
     });
-    if (!booking || booking.status !== "PENDENTE_PAGAMENTO") return;
+    if (!booking || booking.status !== "PENDENTE_PAGAMENTO") return false;
 
     const accessToken = decryptQuadraAccessToken(quadra.mercadoPagoAccessToken);
     const payment = await mercadoPagoClient.getPayment(accessToken, paymentId);
@@ -356,6 +357,7 @@ export const bookingService = {
     } else if (payment.status === "cancelled" || payment.status === "rejected") {
       await prisma.booking.update({ where: { id: booking.id }, data: { status: "CANCELADA" } });
     }
+    return true;
   },
 
   async getByToken(quadraSlug: string, bookingId: string, token: string) {

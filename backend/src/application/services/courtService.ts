@@ -11,6 +11,7 @@ interface CreateCourtInput {
   slotMinutes?: number;
   extraBlockMinutes?: number;
   extraBlockPrice?: number;
+  mensalistaHourlyRate?: number;
 }
 
 interface UpdateCourtInput {
@@ -19,6 +20,7 @@ interface UpdateCourtInput {
   slotMinutes?: number;
   extraBlockMinutes?: number;
   extraBlockPrice?: number;
+  mensalistaHourlyRate?: number | null;
   active?: boolean;
 }
 
@@ -70,7 +72,15 @@ export const courtService = {
     });
   },
 
-  async create({ quadraId, name, hourlyRate, slotMinutes, extraBlockMinutes, extraBlockPrice }: CreateCourtInput) {
+  async create({
+    quadraId,
+    name,
+    hourlyRate,
+    slotMinutes,
+    extraBlockMinutes,
+    extraBlockPrice,
+    mensalistaHourlyRate,
+  }: CreateCourtInput) {
     if (slotMinutes !== undefined) assertValidSlotMinutes(slotMinutes);
 
     return prisma.court.create({
@@ -81,6 +91,7 @@ export const courtService = {
         slotMinutes: slotMinutes ?? 60,
         extraBlockMinutes: extraBlockMinutes ?? 0,
         extraBlockPrice,
+        mensalistaHourlyRate,
         hours: {
           create: Array.from({ length: 7 }, (_, weekday) => ({
             weekday,

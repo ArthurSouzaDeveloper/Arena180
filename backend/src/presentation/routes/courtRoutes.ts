@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { courtService } from "../../application/services/courtService";
 import { bookingService } from "../../application/services/bookingService";
+import { subscriptionService } from "../../application/services/subscriptionService";
 import { asyncHandler } from "../middlewares/errorHandler";
 import { authMiddleware, ownerMiddleware } from "../middlewares/auth";
 
@@ -16,6 +17,7 @@ const createSchema = z.object({
   slotMinutes: z.coerce.number().int().min(5).max(480).optional(),
   extraBlockMinutes: z.coerce.number().int().min(0).optional(),
   extraBlockPrice: z.coerce.number().min(0).optional(),
+  mensalistaHourlyRate: z.coerce.number().positive().optional(),
 });
 
 const updateSchema = z.object({
@@ -24,6 +26,7 @@ const updateSchema = z.object({
   slotMinutes: z.coerce.number().int().min(5).max(480).optional(),
   extraBlockMinutes: z.coerce.number().int().min(0).optional(),
   extraBlockPrice: z.coerce.number().min(0).optional(),
+  mensalistaHourlyRate: z.coerce.number().positive().nullable().optional(),
   active: z.boolean().optional(),
 });
 
@@ -116,6 +119,26 @@ router.put(
   asyncHandler(async (req, res) => {
     const booking = await bookingService.adminCancel(req.auth!.quadraId!, req.params.id, req.params.bookingId);
     res.json(booking);
+  }),
+);
+
+router.get(
+  "/:id/subscriptions",
+  asyncHandler(async (req, res) => {
+    const subscriptions = await subscriptionService.adminList(req.auth!.quadraId!, req.params.id);
+    res.json(subscriptions);
+  }),
+);
+
+router.put(
+  "/:id/subscriptions/:subscriptionId/cancel",
+  asyncHandler(async (req, res) => {
+    const subscription = await subscriptionService.adminCancel(
+      req.auth!.quadraId!,
+      req.params.id,
+      req.params.subscriptionId,
+    );
+    res.json(subscription);
   }),
 );
 

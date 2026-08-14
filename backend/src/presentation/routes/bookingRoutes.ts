@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { bookingService } from "../../application/services/bookingService";
+import { subscriptionService } from "../../application/services/subscriptionService";
 import { asyncHandler } from "../middlewares/errorHandler";
 
 const router = Router();
@@ -92,12 +93,82 @@ router.post(
   }),
 );
 
+const weekdayQuerySchema = z.object({
+  weekday: z.coerce.number().int().min(0).max(6),
+});
+
+const quoteQuerySchema = weekdayQuerySchema.extend({
+  startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Horário inválido"),
+});
+
+const createSubscriptionSchema = quoteQuerySchema.extend({
+  customerName: z.string().min(1),
+  customerPhone: z.string().min(1),
+});
+
+router.get(
+  "/:quadraSlug/courts/:courtId/mensalista/hours",
+  asyncHandler(async (req, res) => {
+    const { weekday } = weekdayQuerySchema.parse(req.query);
+    const result = await subscriptionService.hoursForWeekday(req.params.quadraSlug, req.params.courtId, weekday);
+    res.json(result);
+  }),
+);
+
+router.get(
+  "/:quadraSlug/courts/:courtId/mensalista/quote",
+  asyncHandler(async (req, res) => {
+    const { weekday, startTime } = quoteQuerySchema.parse(req.query);
+    const quote = await subscriptionService.quote(req.params.quadraSlug, req.params.courtId, weekday, startTime);
+    res.json(quote);
+  }),
+);
+
+router.post(
+  "/:quadraSlug/courts/:courtId/mensalista",
+  asyncHandler(async (req, res) => {
+    const data = createSubscriptionSchema.parse(req.body);
+    const subscription = await subscriptionService.create(req.params.quadraSlug, req.params.courtId, data);
+    res.status(201).json(subscription);
+  }),
+);
+
+router.get(
+  "/:quadraSlug/subscriptions/:subscriptionId",
+  asyncHandler(async (req, res) => {
+    const { token } = tokenSchema.parse(req.query);
+    const subscription = await subscriptionService.getByToken(req.params.quadraSlug, req.params.subscriptionId, token);
+    res.json(subscription);
+  }),
+);
+
+router.get(
+  "/:quadraSlug/subscriptions/:subscriptionId/payment-status",
+  asyncHandler(async (req, res) => {
+    const { token } = tokenSchema.parse(req.query);
+    const status = await subscriptionService.getPaymentStatus(req.params.quadraSlug, req.params.subscriptionId, token);
+    res.json(status);
+  }),
+);
+
+router.post(
+  "/:quadraSlug/subscriptions/:subscriptionId/cancel",
+  asyncHandler(async (req, res) => {
+    const { token } = tokenSchema.parse(req.body);
+    const subscription = await subscriptionService.cancelByToken(req.params.quadraSlug, req.params.subscriptionId, token);
+    res.json(subscription);
+  }),
+);
+
 router.post(
   "/:quadraSlug/pix-webhook",
   asyncHandler(async (req, res) => {
     const paymentId = req.body?.data?.id ?? req.query["data.id"];
     if (paymentId) {
-      await bookingService.handlePixWebhook(req.params.quadraSlug, String(paymentId));
+      const handledByBooking = await bookingService.handlePixWebhook(req.params.quadraSlug, String(paymentId));
+      if (!handledByBooking) {
+        await subscriptionService.handlePixWebhook(req.params.quadraSlug, String(paymentId));
+      }
     }
     res.status(200).send("ok");
   }),
