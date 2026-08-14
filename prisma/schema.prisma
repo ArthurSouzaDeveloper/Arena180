@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -10,4 +8,148 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum TipoUsuario {
+  BARBEARIA
+  BARBEIRO
+}
+
+enum StatusContratacao {
+  PENDENTE
+  ACEITA
+  RECUSADA
+  EXPIRADA
+  PAGA
+  CONCLUIDA
+  AVALIADA
+}
+
+enum StatusSplit {
+  PENDENTE
+  PROCESSADO
+  FALHOU
+}
+
+model Usuario {
+  id        String      @id @default(uuid())
+  tipo      TipoUsuario
+  nome      String
+  email     String      @unique
+  telefone  String?
+  cpf       String?     @map("cpf")
+  cnpj      String?     @map("cnpj")
+  endereco  String?     @map("endereco")
+  senhaHash String      @map("senha_hash")
+  criadoEm  DateTime    @default(now()) @map("criado_em")
+
+  perfilBarbeiro        PerfilBarbeiro?
+  contratacoesFeitas    Contratacao[]   @relation("ContratacoesComoBarbearia")
+  contratacoesRecebidas Contratacao[]   @relation("ContratacoesComoBarbeiro")
+  mensagensEnviadas     Mensagem[]
+
+  @@map("usuarios")
+}
+
+model PerfilBarbeiro {
+  id                String   @id @default(uuid())
+  usuarioId         String   @unique @map("usuario_id")
+  anosExperiencia   Int      @map("anos_experiencia")
+  especialidades    String[]
+  cidade            String
+  bairro            String?
+  raioAtendimentoKm Int      @map("raio_atendimento_km")
+  valorDiariaPadrao Decimal  @map("valor_diaria_padrao") @db.Decimal(10, 2)
+  mpAccountId       String?  @map("mp_account_id")
+  notaMedia         Decimal  @default(0) @map("nota_media") @db.Decimal(3, 2)
+  totalAvaliacoes   Int      @default(0) @map("total_avaliacoes")
+
+  usuario        Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  portfolioFotos PortfolioFoto[]
+
+  @@map("perfis_barbeiro")
+}
+
+model PortfolioFoto {
+  id               String @id @default(uuid())
+  perfilBarbeiroId String @map("perfil_barbeiro_id")
+  urlImagem        String @map("url_imagem")
+  ordem            Int    @default(0)
+
+  perfilBarbeiro PerfilBarbeiro @relation(fields: [perfilBarbeiroId], references: [id], onDelete: Cascade)
+
+  @@map("portfolio_fotos")
+}
+
+model Contratacao {
+  id            String            @id @default(uuid())
+  barbeariaId   String            @map("barbearia_id")
+  barbeiroId    String            @map("barbeiro_id")
+  dataInicio    DateTime          @map("data_inicio")
+  dataFim       DateTime          @map("data_fim")
+  valorBarbeiro Decimal           @map("valor_barbeiro") @db.Decimal(10, 2)
+  valorComissao Decimal           @map("valor_comissao") @db.Decimal(10, 2)
+  valorTotal    Decimal           @map("valor_total") @db.Decimal(10, 2)
+  status        StatusContratacao @default(PENDENTE)
+  expiraEm      DateTime          @map("expira_em")
+  criadoEm      DateTime          @default(now()) @map("criado_em")
+
+  barbearia Usuario    @relation("ContratacoesComoBarbearia", fields: [barbeariaId], references: [id])
+  barbeiro  Usuario    @relation("ContratacoesComoBarbeiro", fields: [barbeiroId], references: [id])
+  pagamento Pagamento?
+  avaliacao Avaliacao?
+  conversa  Conversa?
+
+  @@map("contratacoes")
+}
+
+model Pagamento {
+  id                      String      @id @default(uuid())
+  contratacaoId           String      @unique @map("contratacao_id")
+  mpPaymentId             String?     @map("mp_payment_id")
+  valorTotal              Decimal     @map("valor_total") @db.Decimal(10, 2)
+  valorRepassadoBarbeiro  Decimal     @map("valor_repassado_barbeiro") @db.Decimal(10, 2)
+  valorComissaoPlataforma Decimal     @map("valor_comissao_plataforma") @db.Decimal(10, 2)
+  statusSplit             StatusSplit @default(PENDENTE) @map("status_split")
+  criadoEm                DateTime    @default(now()) @map("criado_em")
+
+  contratacao Contratacao @relation(fields: [contratacaoId], references: [id], onDelete: Cascade)
+
+  @@map("pagamentos")
+}
+
+model Avaliacao {
+  id            String   @id @default(uuid())
+  contratacaoId String   @unique @map("contratacao_id")
+  nota          Int
+  comentario    String?
+  criadoEm      DateTime @default(now()) @map("criado_em")
+
+  contratacao Contratacao @relation(fields: [contratacaoId], references: [id], onDelete: Cascade)
+
+  @@map("avaliacoes")
+}
+
+model Conversa {
+  id            String   @id @default(uuid())
+  contratacaoId String   @unique @map("contratacao_id")
+  criadoEm      DateTime @default(now()) @map("criado_em")
+
+  contratacao Contratacao @relation(fields: [contratacaoId], references: [id], onDelete: Cascade)
+  mensagens   Mensagem[]
+
+  @@map("conversas")
+}
+
+model Mensagem {
+  id          String   @id @default(uuid())
+  conversaId  String   @map("conversa_id")
+  remetenteId String   @map("remetente_id")
+  texto       String
+  criadoEm    DateTime @default(now()) @map("criado_em")
+
+  conversa  Conversa @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+  remetente Usuario  @relation(fields: [remetenteId], references: [id])
+
+  @@map("mensagens")
 }
