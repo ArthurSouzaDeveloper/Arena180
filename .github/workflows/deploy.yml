@@ -33,6 +33,9 @@ on:
       list_arenas:
         description: "Listar todas as arenas e e-mails de admin (true para listar)"
         required: false
+      setup_https:
+        description: "Configurar certificado HTTPS via Let's Encrypt para o domínio (true para executar)"
+        required: false
 
 jobs:
   deploy:
@@ -126,6 +129,34 @@ jobs:
           ARENA_ADMIN_NAME: ${{ inputs.arena_admin_name }}
           ARENA_ADMIN_EMAIL: ${{ inputs.arena_admin_email }}
           ARENA_ADMIN_PASSWORD: ${{ inputs.arena_admin_password }}
+
+      - name: Setup HTTPS certificate (manual dispatch only)
+        if: ${{ inputs.setup_https == 'true' }}
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            set -e
+
+            if ! command -v certbot >/dev/null 2>&1; then
+              apt-get update -y
+              apt-get install -y certbot
+            fi
+
+            mkdir -p /var/www/certbot
+
+            certbot certonly --webroot -w /var/www/certbot \
+              -d arena180.com.br -d www.arena180.com.br \
+              --agree-tos --non-interactive --register-unsafely-without-email \
+              --keep-until-expiring
+
+            cd /opt/gestquadra
+            docker compose -f docker-compose.prod.yml --env-file .env.prod restart frontend
+            sleep 3
+            echo "--- frontend logs (diagnostic) ---"
+            docker compose -f docker-compose.prod.yml logs frontend --tail 40
 
       - name: List arenas (manual dispatch only)
         if: ${{ inputs.list_arenas == 'true' }}
