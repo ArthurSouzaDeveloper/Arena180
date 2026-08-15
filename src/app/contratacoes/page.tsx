@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { statusPermiteChat } from "@/lib/chat";
 import { expirarContratacoesPendentes } from "@/lib/contratacao";
 import { prisma } from "@/lib/prisma";
 import { ROTULOS_STATUS_CONTRATACAO } from "@/lib/status-contratacao";
@@ -47,6 +49,14 @@ export default async function ContratacoesPage() {
               </div>
               {contratacao.status === "ACEITA" && (
                 <PagarContratacaoButton contratacaoId={contratacao.id} />
+              )}
+              {statusPermiteChat(contratacao.status) && (
+                <Link
+                  href={`/chat/${contratacao.id}`}
+                  className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium"
+                >
+                  Chat
+                </Link>
               )}
             </div>
           ))}

@@ -53,6 +53,14 @@ export const solicitarContratacaoSchema = z
     path: ["dataFim"],
   });
 
+export const mensagemSchema = z.object({
+  texto: z
+    .string()
+    .trim()
+    .min(1, "A mensagem não pode estar vazia.")
+    .max(1000, "A mensagem pode ter no máximo 1000 caracteres."),
+});
+
 export type CadastroBarbeariaInput = z.infer<typeof cadastroBarbeariaSchema>;
 export type CadastroBarbeiroInput = z.infer<typeof cadastroBarbeiroSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -60,3 +68,4 @@ export type PerfilBarbeiroInput = z.infer<typeof perfilBarbeiroSchema>;
 export type SolicitarContratacaoInput = z.infer<
   typeof solicitarContratacaoSchema
 >;
+export type MensagemInput = z.infer<typeof mensagemSchema>;

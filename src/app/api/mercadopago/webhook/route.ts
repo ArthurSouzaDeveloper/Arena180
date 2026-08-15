@@ -47,6 +47,11 @@ export async function POST(request: Request) {
           where: { id: contratacaoId },
           data: { status: "PAGA" },
         }),
+        prisma.conversa.upsert({
+          where: { contratacaoId },
+          update: {},
+          create: { contratacaoId },
+        }),
       ]);
     }
   } else if (["rejected", "cancelled"].includes(pagamentoMp.status)) {
