@@ -4,6 +4,7 @@ import {
   cadastroBarbeiroSchema,
   loginSchema,
   perfilBarbeiroSchema,
+  solicitarContratacaoSchema,
 } from "./validation";
 
 describe("cadastroBarbeariaSchema", () => {
@@ -130,6 +131,37 @@ describe("perfilBarbeiroSchema", () => {
       cidade: "São Paulo",
       raioAtendimentoKm: 10,
       valorDiariaPadrao: 0,
+    });
+
+    expect(resultado.success).toBe(false);
+  });
+});
+
+describe("solicitarContratacaoSchema", () => {
+  it("aceita um período válido", () => {
+    const resultado = solicitarContratacaoSchema.safeParse({
+      barbeiroId: "abc-123",
+      dataInicio: "2026-09-01",
+      dataFim: "2026-09-02",
+    });
+
+    expect(resultado.success).toBe(true);
+  });
+
+  it("rejeita quando a data de fim é anterior à data de início", () => {
+    const resultado = solicitarContratacaoSchema.safeParse({
+      barbeiroId: "abc-123",
+      dataInicio: "2026-09-02",
+      dataFim: "2026-09-01",
+    });
+
+    expect(resultado.success).toBe(false);
+  });
+
+  it("rejeita quando o barbeiroId está ausente", () => {
+    const resultado = solicitarContratacaoSchema.safeParse({
+      dataInicio: "2026-09-01",
+      dataFim: "2026-09-02",
     });
 
     expect(resultado.success).toBe(false);

@@ -14,7 +14,13 @@ export function Header() {
       <nav className="flex items-center gap-4 text-sm">
         <Link href="/barbeiros">Buscar barbeiros</Link>
         {session?.user.tipo === "BARBEIRO" && (
-          <Link href="/perfil">Meu perfil</Link>
+          <>
+            <Link href="/perfil">Meu perfil</Link>
+            <Link href="/pedidos">Pedidos</Link>
+          </>
+        )}
+        {session?.user.tipo === "BARBEARIA" && (
+          <Link href="/contratacoes">Minhas contratações</Link>
         )}
         {session ? (
           <button onClick={() => signOut()} className="underline">

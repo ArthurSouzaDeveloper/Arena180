@@ -42,7 +42,21 @@ export const perfilBarbeiroSchema = z.object({
     .positive("Informe um valor de diária válido."),
 });
 
+export const solicitarContratacaoSchema = z
+  .object({
+    barbeiroId: z.string().min(1, "Selecione um barbeiro."),
+    dataInicio: z.coerce.date("Data de início inválida."),
+    dataFim: z.coerce.date("Data de fim inválida."),
+  })
+  .refine((dados) => dados.dataFim >= dados.dataInicio, {
+    message: "A data de fim deve ser igual ou posterior à data de início.",
+    path: ["dataFim"],
+  });
+
 export type CadastroBarbeariaInput = z.infer<typeof cadastroBarbeariaSchema>;
 export type CadastroBarbeiroInput = z.infer<typeof cadastroBarbeiroSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type PerfilBarbeiroInput = z.infer<typeof perfilBarbeiroSchema>;
+export type SolicitarContratacaoInput = z.infer<
+  typeof solicitarContratacaoSchema
+>;
