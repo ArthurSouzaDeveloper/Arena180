@@ -23,6 +23,26 @@ export const loginSchema = z.object({
   senha: z.string().min(1, "Informe a senha."),
 });
 
+export const perfilBarbeiroSchema = z.object({
+  anosExperiencia: z.coerce
+    .number()
+    .int()
+    .min(0, "Anos de experiência não pode ser negativo."),
+  especialidades: z
+    .array(z.string().trim().min(1))
+    .min(1, "Informe ao menos uma especialidade."),
+  cidade: z.string().trim().min(2, "Informe a cidade."),
+  bairro: z.string().trim().optional(),
+  raioAtendimentoKm: z.coerce
+    .number()
+    .int()
+    .min(1, "Raio de atendimento deve ser de ao menos 1km."),
+  valorDiariaPadrao: z.coerce
+    .number()
+    .positive("Informe um valor de diária válido."),
+});
+
 export type CadastroBarbeariaInput = z.infer<typeof cadastroBarbeariaSchema>;
 export type CadastroBarbeiroInput = z.infer<typeof cadastroBarbeiroSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type PerfilBarbeiroInput = z.infer<typeof perfilBarbeiroSchema>;

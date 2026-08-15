@@ -3,6 +3,7 @@ import {
   cadastroBarbeariaSchema,
   cadastroBarbeiroSchema,
   loginSchema,
+  perfilBarbeiroSchema,
 } from "./validation";
 
 describe("cadastroBarbeariaSchema", () => {
@@ -87,6 +88,48 @@ describe("loginSchema", () => {
     const resultado = loginSchema.safeParse({
       email: "joao@email.com",
       senha: "",
+    });
+
+    expect(resultado.success).toBe(false);
+  });
+});
+
+describe("perfilBarbeiroSchema", () => {
+  it("aceita dados válidos e converte campos numéricos vindos como string", () => {
+    const resultado = perfilBarbeiroSchema.safeParse({
+      anosExperiencia: "5",
+      especialidades: ["degradê", "barba"],
+      cidade: "São Paulo",
+      raioAtendimentoKm: "10",
+      valorDiariaPadrao: "250.00",
+    });
+
+    expect(resultado.success).toBe(true);
+    if (resultado.success) {
+      expect(resultado.data.anosExperiencia).toBe(5);
+      expect(resultado.data.valorDiariaPadrao).toBe(250);
+    }
+  });
+
+  it("rejeita quando não há nenhuma especialidade", () => {
+    const resultado = perfilBarbeiroSchema.safeParse({
+      anosExperiencia: 5,
+      especialidades: [],
+      cidade: "São Paulo",
+      raioAtendimentoKm: 10,
+      valorDiariaPadrao: 250,
+    });
+
+    expect(resultado.success).toBe(false);
+  });
+
+  it("rejeita valor de diária negativo ou zero", () => {
+    const resultado = perfilBarbeiroSchema.safeParse({
+      anosExperiencia: 5,
+      especialidades: ["barba"],
+      cidade: "São Paulo",
+      raioAtendimentoKm: 10,
+      valorDiariaPadrao: 0,
     });
 
     expect(resultado.success).toBe(false);

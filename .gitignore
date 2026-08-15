@@ -42,3 +42,7 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# uploads locais de desenvolvimento (produção deve usar serviço de blob)
+/public/uploads/portfolio/*
+!/public/uploads/portfolio/.gitkeep
