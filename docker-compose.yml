@@ -3,13 +3,13 @@ services:
     image: postgres:16
     restart: unless-stopped
     environment:
-      POSTGRES_USER: arena180
-      POSTGRES_PASSWORD: arena180
-      POSTGRES_DB: arena180
+      POSTGRES_USER: freebarber
+      POSTGRES_PASSWORD: freebarber
+      POSTGRES_DB: freebarber
     ports:
       - "5432:5432"
     volumes:
-      - arena180-db-data:/var/lib/postgresql/data
+      - freebarber-db-data:/var/lib/postgresql/data
 
 volumes:
-  arena180-db-data:
+  freebarber-db-data:

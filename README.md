@@ -1,4 +1,4 @@
-# Arena180
+# FreeBarber
 
 Plataforma de contratação de barbeiros freelancer por barbearias.
 

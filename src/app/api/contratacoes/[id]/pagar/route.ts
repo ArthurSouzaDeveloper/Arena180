@@ -47,7 +47,7 @@ export async function POST(
     preferencia = await criarPreferenciaPagamento({
       accessTokenVendedor: perfilBarbeiro.mpAccessToken,
       contratacaoId: contratacao.id,
-      descricao: `Contratação de ${contratacao.barbeiro.nome} — Arena180`,
+      descricao: `Contratação de ${contratacao.barbeiro.nome} — FreeBarber`,
       valorTotal: Number(contratacao.valorTotal),
       valorComissao: Number(contratacao.valorComissao),
     });

@@ -14,7 +14,7 @@ export function Header() {
           href="/"
           className="font-display text-xl font-semibold tracking-tight text-parchment"
         >
-          Arena180
+          FreeBarber
         </Link>
         <nav className="flex items-center gap-5 text-sm text-parchment-dim">
           <Link href="/barbeiros" className="hover:text-brass">

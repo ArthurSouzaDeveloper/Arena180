@@ -22,7 +22,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Arena180 — Barbeiros freelancer para sua barbearia",
+  title: "FreeBarber — Barbeiros freelancer para sua barbearia",
   description:
     "Marketplace que conecta barbearias a barbeiros freelancer disponíveis por período.",
 };
