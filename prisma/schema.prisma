@@ -52,17 +52,20 @@ model Usuario {
 }
 
 model PerfilBarbeiro {
-  id                String   @id @default(uuid())
-  usuarioId         String   @unique @map("usuario_id")
-  anosExperiencia   Int      @map("anos_experiencia")
+  id                String    @id @default(uuid())
+  usuarioId         String    @unique @map("usuario_id")
+  anosExperiencia   Int       @map("anos_experiencia")
   especialidades    String[]
   cidade            String
   bairro            String?
-  raioAtendimentoKm Int      @map("raio_atendimento_km")
-  valorDiariaPadrao Decimal  @map("valor_diaria_padrao") @db.Decimal(10, 2)
-  mpAccountId       String?  @map("mp_account_id")
-  notaMedia         Decimal  @default(0) @map("nota_media") @db.Decimal(3, 2)
-  totalAvaliacoes   Int      @default(0) @map("total_avaliacoes")
+  raioAtendimentoKm Int       @map("raio_atendimento_km")
+  valorDiariaPadrao Decimal   @map("valor_diaria_padrao") @db.Decimal(10, 2)
+  mpAccountId       String?   @map("mp_account_id")
+  mpAccessToken     String?   @map("mp_access_token")
+  mpRefreshToken    String?   @map("mp_refresh_token")
+  mpTokenExpiraEm   DateTime? @map("mp_token_expira_em")
+  notaMedia         Decimal   @default(0) @map("nota_media") @db.Decimal(3, 2)
+  totalAvaliacoes   Int       @default(0) @map("total_avaliacoes")
 
   usuario        Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   portfolioFotos PortfolioFoto[]
@@ -106,6 +109,7 @@ model Contratacao {
 model Pagamento {
   id                      String      @id @default(uuid())
   contratacaoId           String      @unique @map("contratacao_id")
+  mpPreferenceId          String?     @map("mp_preference_id")
   mpPaymentId             String?     @map("mp_payment_id")
   valorTotal              Decimal     @map("valor_total") @db.Decimal(10, 2)
   valorRepassadoBarbeiro  Decimal     @map("valor_repassado_barbeiro") @db.Decimal(10, 2)

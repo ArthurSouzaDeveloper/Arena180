@@ -23,6 +23,9 @@ export default async function ContratarBarbeiroPage({
   if (!perfil) {
     notFound();
   }
+  if (!perfil.mpAccountId) {
+    redirect(`/barbeiros/${id}`);
+  }
 
   const { valorBarbeiro, valorComissao, valorTotal } = calcularComissao(
     Number(perfil.valorDiariaPadrao),

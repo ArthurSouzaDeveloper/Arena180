@@ -37,14 +37,19 @@ export default async function PerfilPublicoBarbeiroPage({
           ★ {Number(perfil.notaMedia).toFixed(1)} ({perfil.totalAvaliacoes}{" "}
           avaliações)
         </p>
-        {session?.user.tipo === "BARBEARIA" && (
-          <Link
-            href={`/barbeiros/${id}/contratar`}
-            className="mt-3 inline-block rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
-          >
-            Contratar
-          </Link>
-        )}
+        {session?.user.tipo === "BARBEARIA" &&
+          (perfil.mpAccountId ? (
+            <Link
+              href={`/barbeiros/${id}/contratar`}
+              className="mt-3 inline-block rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+            >
+              Contratar
+            </Link>
+          ) : (
+            <p className="mt-3 text-sm text-neutral-500">
+              Este barbeiro ainda não habilitou pagamentos.
+            </p>
+          ))}
       </div>
 
       <div className="flex flex-wrap gap-2">

@@ -37,6 +37,9 @@ CREATE TABLE "perfis_barbeiro" (
     "raio_atendimento_km" INTEGER NOT NULL,
     "valor_diaria_padrao" DECIMAL(10,2) NOT NULL,
     "mp_account_id" TEXT,
+    "mp_access_token" TEXT,
+    "mp_refresh_token" TEXT,
+    "mp_token_expira_em" TIMESTAMP(3),
     "nota_media" DECIMAL(3,2) NOT NULL DEFAULT 0,
     "total_avaliacoes" INTEGER NOT NULL DEFAULT 0,
 
@@ -74,6 +77,7 @@ CREATE TABLE "contratacoes" (
 CREATE TABLE "pagamentos" (
     "id" TEXT NOT NULL,
     "contratacao_id" TEXT NOT NULL,
+    "mp_preference_id" TEXT,
     "mp_payment_id" TEXT,
     "valor_total" DECIMAL(10,2) NOT NULL,
     "valor_repassado_barbeiro" DECIMAL(10,2) NOT NULL,

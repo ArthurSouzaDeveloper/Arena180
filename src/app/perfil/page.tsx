@@ -1,15 +1,22 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PerfilBarbeiroForm } from "@/components/perfil-barbeiro-form";
 import { PortfolioUpload } from "@/components/portfolio-upload";
 
-export default async function PerfilPage() {
+export default async function PerfilPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mp?: string }>;
+}) {
   const session = await auth();
 
   if (!session || session.user.tipo !== "BARBEIRO") {
     redirect("/login");
   }
+
+  const { mp } = await searchParams;
 
   const perfil = await prisma.perfilBarbeiro.findUnique({
     where: { usuarioId: session.user.id },
@@ -25,6 +32,41 @@ export default async function PerfilPage() {
           profissionais.
         </p>
       </div>
+
+      {mp === "sucesso" && (
+        <p className="text-sm text-green-700">
+          Conta Mercado Pago conectada com sucesso.
+        </p>
+      )}
+      {mp === "erro" && (
+        <p className="text-sm text-red-600">
+          Não foi possível conectar sua conta Mercado Pago. Tente novamente.
+        </p>
+      )}
+
+      {perfil && (
+        <div className="rounded-md border border-neutral-200 p-4">
+          <h2 className="text-lg font-semibold">Recebimento de pagamentos</h2>
+          {perfil.mpAccountId ? (
+            <p className="mt-1 text-sm text-green-700">
+              Conta Mercado Pago conectada. Você já pode receber contratações.
+            </p>
+          ) : (
+            <>
+              <p className="mt-1 text-sm text-neutral-600">
+                Conecte sua conta Mercado Pago para poder receber contratações.
+                Sem isso, seu perfil não aparece disponível para as barbearias.
+              </p>
+              <Link
+                href="/api/mercadopago/conectar"
+                className="mt-3 inline-block rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+              >
+                Conectar Mercado Pago
+              </Link>
+            </>
+          )}
+        </div>
+      )}
 
       <PerfilBarbeiroForm
         valoresIniciais={

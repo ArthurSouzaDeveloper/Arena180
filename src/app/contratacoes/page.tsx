@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { expirarContratacoesPendentes } from "@/lib/contratacao";
 import { prisma } from "@/lib/prisma";
 import { ROTULOS_STATUS_CONTRATACAO } from "@/lib/status-contratacao";
+import { PagarContratacaoButton } from "@/components/pagar-contratacao-button";
 
 export default async function ContratacoesPage() {
   const session = await auth();
@@ -31,17 +32,22 @@ export default async function ContratacoesPage() {
           {contratacoes.map((contratacao) => (
             <div
               key={contratacao.id}
-              className="rounded-md border border-neutral-200 p-4"
+              className="flex items-center justify-between rounded-md border border-neutral-200 p-4"
             >
-              <p className="font-medium">{contratacao.barbeiro.nome}</p>
-              <p className="text-sm text-neutral-600">
-                {contratacao.dataInicio.toLocaleDateString("pt-BR")} até{" "}
-                {contratacao.dataFim.toLocaleDateString("pt-BR")} · Total: R${" "}
-                {Number(contratacao.valorTotal).toFixed(2)}
-              </p>
-              <p className="mt-1 text-sm">
-                {ROTULOS_STATUS_CONTRATACAO[contratacao.status]}
-              </p>
+              <div>
+                <p className="font-medium">{contratacao.barbeiro.nome}</p>
+                <p className="text-sm text-neutral-600">
+                  {contratacao.dataInicio.toLocaleDateString("pt-BR")} até{" "}
+                  {contratacao.dataFim.toLocaleDateString("pt-BR")} · Total: R${" "}
+                  {Number(contratacao.valorTotal).toFixed(2)}
+                </p>
+                <p className="mt-1 text-sm">
+                  {ROTULOS_STATUS_CONTRATACAO[contratacao.status]}
+                </p>
+              </div>
+              {contratacao.status === "ACEITA" && (
+                <PagarContratacaoButton contratacaoId={contratacao.id} />
+              )}
             </div>
           ))}
         </div>

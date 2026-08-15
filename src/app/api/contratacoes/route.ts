@@ -29,6 +29,12 @@ export async function POST(request: Request) {
       { status: 404 },
     );
   }
+  if (!perfilBarbeiro.mpAccountId) {
+    return NextResponse.json(
+      { erro: "Este barbeiro ainda não habilitou pagamentos." },
+      { status: 409 },
+    );
+  }
 
   const { valorBarbeiro, valorComissao, valorTotal } = calcularComissao(
     Number(perfilBarbeiro.valorDiariaPadrao),
