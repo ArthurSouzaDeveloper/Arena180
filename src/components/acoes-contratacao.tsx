@@ -34,7 +34,7 @@ export function AcoesContratacao({ contratacaoId }: { contratacaoId: string }) {
           type="button"
           onClick={() => handleAcao("aceitar")}
           disabled={enviando !== null}
-          className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+          className="btn-primary py-1.5"
         >
           {enviando === "aceitar" ? "Aceitando..." : "Aceitar"}
         </button>
@@ -42,12 +42,12 @@ export function AcoesContratacao({ contratacaoId }: { contratacaoId: string }) {
           type="button"
           onClick={() => handleAcao("recusar")}
           disabled={enviando !== null}
-          className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+          className="btn-secondary py-1.5"
         >
           {enviando === "recusar" ? "Recusando..." : "Recusar"}
         </button>
       </div>
-      {erro && <p className="text-xs text-red-600">{erro}</p>}
+      {erro && <p className="text-xs text-red-400">{erro}</p>}
     </div>
   );
 }

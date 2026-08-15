@@ -35,11 +35,11 @@ export function PagarContratacaoButton({
         type="button"
         onClick={handlePagar}
         disabled={enviando}
-        className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+        className="btn-primary py-1.5"
       >
         {enviando ? "Abrindo pagamento..." : "Pagar agora"}
       </button>
-      {erro && <p className="text-xs text-red-600">{erro}</p>}
+      {erro && <p className="text-xs text-red-400">{erro}</p>}
     </div>
   );
 }

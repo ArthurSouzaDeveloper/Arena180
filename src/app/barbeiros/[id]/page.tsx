@@ -27,13 +27,13 @@ export default async function PerfilPublicoBarbeiroPage({
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-16">
       <div>
-        <h1 className="text-2xl font-semibold">{perfil.usuario.nome}</h1>
-        <p className="text-neutral-600">
+        <h1 className="page-title">{perfil.usuario.nome}</h1>
+        <p className="mt-1 text-parchment-dim">
           {perfil.cidade}
           {perfil.bairro ? ` · ${perfil.bairro}` : ""} · atende em até{" "}
           {perfil.raioAtendimentoKm}km
         </p>
-        <p className="mt-1 text-sm">
+        <p className="mt-1 font-mono text-sm text-brass">
           ★ {Number(perfil.notaMedia).toFixed(1)} ({perfil.totalAvaliacoes}{" "}
           avaliações)
         </p>
@@ -41,12 +41,12 @@ export default async function PerfilPublicoBarbeiroPage({
           (perfil.mpAccountId ? (
             <Link
               href={`/barbeiros/${id}/contratar`}
-              className="mt-3 inline-block rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+              className="btn-primary mt-4"
             >
               Contratar
             </Link>
           ) : (
-            <p className="mt-3 text-sm text-neutral-500">
+            <p className="mt-4 text-sm text-parchment-dim">
               Este barbeiro ainda não habilitou pagamentos.
             </p>
           ))}
@@ -54,40 +54,37 @@ export default async function PerfilPublicoBarbeiroPage({
 
       <div className="flex flex-wrap gap-2">
         {perfil.especialidades.map((especialidade) => (
-          <span
-            key={especialidade}
-            className="rounded-full bg-neutral-100 px-3 py-1 text-sm"
-          >
+          <span key={especialidade} className="badge">
             {especialidade}
           </span>
         ))}
       </div>
 
       <div>
-        <h2 className="text-lg font-semibold">Experiência</h2>
-        <p className="text-neutral-700">
+        <h2 className="eyebrow">Experiência</h2>
+        <p className="mt-1 text-parchment">
           {perfil.anosExperiencia} anos de experiência.
         </p>
       </div>
 
       <div>
-        <h2 className="text-lg font-semibold">Valor da diária</h2>
-        <p className="text-neutral-700">
+        <h2 className="eyebrow">Valor da diária</h2>
+        <p className="mt-1 font-mono text-parchment">
           R$ {Number(perfil.valorDiariaPadrao).toFixed(2)}
         </p>
       </div>
 
       {perfil.portfolioFotos.length > 0 && (
         <div>
-          <h2 className="text-lg font-semibold">Portfólio</h2>
-          <div className="mt-2 grid grid-cols-3 gap-3 sm:grid-cols-4">
+          <h2 className="eyebrow">Portfólio</h2>
+          <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
             {perfil.portfolioFotos.map((foto) => (
               <div key={foto.id} className="relative aspect-square">
                 <Image
                   src={foto.urlImagem}
                   alt="Trabalho do barbeiro"
                   fill
-                  className="rounded-md object-cover"
+                  className="rounded-sm object-cover"
                 />
               </div>
             ))}

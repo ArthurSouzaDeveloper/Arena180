@@ -34,24 +34,22 @@ export default async function ContratarBarbeiroPage({
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 py-16">
       <div>
-        <h1 className="text-2xl font-semibold">
-          Contratar {perfil.usuario.nome}
-        </h1>
-        <p className="mt-1 text-sm text-neutral-600">
+        <h1 className="page-title">Contratar {perfil.usuario.nome}</h1>
+        <p className="mt-1 text-sm text-parchment-dim">
           Escolha o período desejado e confirme a solicitação.
         </p>
       </div>
 
-      <div className="rounded-md border border-neutral-200 p-4 text-sm">
-        <div className="flex justify-between">
+      <div className="card p-4 font-mono text-sm">
+        <div className="flex justify-between text-parchment">
           <span>Valor do barbeiro</span>
           <span>R$ {valorBarbeiro.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between text-neutral-600">
+        <div className="flex justify-between text-parchment-dim">
           <span>Taxa da plataforma</span>
           <span>R$ {valorComissao.toFixed(2)}</span>
         </div>
-        <div className="mt-2 flex justify-between border-t border-neutral-200 pt-2 font-medium">
+        <div className="mt-2 flex justify-between border-t border-line pt-2 font-semibold text-brass">
           <span>Total a pagar</span>
           <span>R$ {valorTotal.toFixed(2)}</span>
         </div>

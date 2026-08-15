@@ -42,33 +42,23 @@ export function SolicitarContratacaoForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <label className="flex flex-col gap-1 text-sm">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <label className="field-label flex flex-col gap-1">
         Data de início
-        <input
-          name="dataInicio"
-          type="date"
-          required
-          className="rounded-md border border-neutral-300 px-3 py-2"
-        />
+        <input name="dataInicio" type="date" required className="field-input" />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="field-label flex flex-col gap-1">
         Data de fim
-        <input
-          name="dataFim"
-          type="date"
-          required
-          className="rounded-md border border-neutral-300 px-3 py-2"
-        />
+        <input name="dataFim" type="date" required className="field-input" />
       </label>
-      {erro && <p className="text-sm text-red-600">{erro}</p>}
+      {erro && <p className="text-sm text-red-400">{erro}</p>}
       {sucesso && (
-        <p className="text-sm text-green-700">Solicitação enviada.</p>
+        <p className="text-sm text-emerald-400">Solicitação enviada.</p>
       )}
       <button
         type="submit"
         disabled={enviando}
-        className="mt-2 w-fit rounded-md bg-neutral-900 px-4 py-2 font-medium text-white disabled:opacity-50"
+        className="btn-primary mt-2 w-fit"
       >
         {enviando ? "Enviando..." : "Solicitar contratação"}
       </button>

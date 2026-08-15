@@ -1,26 +1,101 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ink: #1b1712;
+  --ink-raised: #241f18;
+  --ink-raised-2: #2c2419;
+  --line: #3a322a;
+  --brass: #c9a227;
+  --brass-bright: #e8c158;
+  --oxblood: #8c3a3a;
+  --parchment: #ede6d6;
+  --parchment-dim: #a99c86;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-ink: var(--ink);
+  --color-ink-raised: var(--ink-raised);
+  --color-ink-raised-2: var(--ink-raised-2);
+  --color-line: var(--line);
+  --color-brass: var(--brass);
+  --color-brass-bright: var(--brass-bright);
+  --color-oxblood: var(--oxblood);
+  --color-parchment: var(--parchment);
+  --color-parchment-dim: var(--parchment-dim);
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-work-sans);
+  --font-mono: var(--font-plex-mono);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--ink);
+  color: var(--parchment);
+  font-family: var(--font-work-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer components {
+  .pole-stripe {
+    background-image: repeating-linear-gradient(
+      45deg,
+      var(--brass) 0px,
+      var(--brass) 6px,
+      var(--oxblood) 6px,
+      var(--oxblood) 12px,
+      var(--parchment) 12px,
+      var(--parchment) 18px
+    );
+  }
+
+  .pole-rule {
+    @apply h-1 w-12 rounded-full;
+    background-image: repeating-linear-gradient(
+      45deg,
+      var(--brass) 0px,
+      var(--brass) 6px,
+      var(--oxblood) 6px,
+      var(--oxblood) 12px,
+      var(--parchment) 12px,
+      var(--parchment) 18px
+    );
+  }
+
+  .page-title {
+    @apply font-display text-3xl font-semibold tracking-tight text-parchment;
+  }
+
+  .eyebrow {
+    @apply font-mono text-xs tracking-[0.18em] text-brass uppercase;
+  }
+
+  .card {
+    @apply rounded-sm border border-line bg-ink-raised;
+  }
+
+  .field-label {
+    @apply text-sm text-parchment-dim;
+  }
+
+  .field-input {
+    @apply w-full border-b border-line bg-transparent px-1 py-2 text-parchment placeholder:text-parchment-dim/60 outline-none transition-colors focus:border-brass;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-sm bg-brass px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-brass-bright disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-sm border border-line px-4 py-2 text-sm font-semibold text-parchment transition-colors hover:border-brass hover:text-brass disabled:opacity-50;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-sm px-4 py-2 text-sm font-semibold text-parchment-dim underline decoration-line transition-colors hover:text-brass;
+  }
+
+  .badge {
+    @apply rounded-full border border-line px-2.5 py-0.5 font-mono text-xs text-parchment-dim;
+  }
+
+  .link-brass {
+    @apply text-brass underline decoration-brass/40 underline-offset-2 hover:text-brass-bright;
+  }
 }

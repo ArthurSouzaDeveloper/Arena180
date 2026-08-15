@@ -63,14 +63,14 @@ export function ChatConversa({
 
   return (
     <div className="flex flex-1 flex-col gap-3">
-      <div className="flex max-h-[60vh] min-h-[300px] flex-col gap-2 overflow-y-auto rounded-md border border-neutral-200 p-4">
+      <div className="card flex max-h-[60vh] min-h-[300px] flex-col gap-2 overflow-y-auto p-4">
         {mensagens.map((mensagem) => (
           <div
             key={mensagem.id}
-            className={`max-w-[75%] rounded-md px-3 py-2 text-sm ${
+            className={`max-w-[75%] rounded-sm px-3 py-2 text-sm ${
               mensagem.remetenteId === usuarioId
-                ? "ml-auto bg-neutral-900 text-white"
-                : "bg-neutral-100"
+                ? "ml-auto bg-brass text-ink"
+                : "bg-ink-raised-2 text-parchment"
             }`}
           >
             <p className="text-xs opacity-70">{mensagem.remetenteNome}</p>
@@ -80,7 +80,7 @@ export function ChatConversa({
         <div ref={fimRef} />
       </div>
 
-      {erro && <p className="text-sm text-red-600">{erro}</p>}
+      {erro && <p className="text-sm text-red-400">{erro}</p>}
 
       <form onSubmit={handleSubmit} className="flex gap-2">
         <input
@@ -88,12 +88,9 @@ export function ChatConversa({
           placeholder="Escreva uma mensagem..."
           maxLength={1000}
           required
-          className="flex-1 rounded-md border border-neutral-300 px-3 py-2"
+          className="field-input flex-1"
         />
-        <button
-          type="submit"
-          className="rounded-md bg-neutral-900 px-4 py-2 font-medium text-white"
-        >
+        <button type="submit" className="btn-primary">
           Enviar
         </button>
       </form>

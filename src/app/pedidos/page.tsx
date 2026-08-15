@@ -23,26 +23,25 @@ export default async function PedidosPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-16">
-      <h1 className="text-2xl font-semibold">Pedidos de contratação</h1>
+      <h1 className="page-title">Pedidos de contratação</h1>
 
       {pedidos.length === 0 ? (
-        <p className="text-neutral-600">Você ainda não recebeu pedidos.</p>
+        <p className="text-parchment-dim">Você ainda não recebeu pedidos.</p>
       ) : (
         <div className="flex flex-col gap-3">
           {pedidos.map((pedido) => (
-            <div
-              key={pedido.id}
-              className="flex flex-col gap-3 rounded-md border border-neutral-200 p-4"
-            >
+            <div key={pedido.id} className="card flex flex-col gap-3 p-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="font-medium">{pedido.barbearia.nome}</p>
-                  <p className="text-sm text-neutral-600">
+                  <p className="font-display font-medium text-parchment">
+                    {pedido.barbearia.nome}
+                  </p>
+                  <p className="text-sm text-parchment-dim">
                     {pedido.dataInicio.toLocaleDateString("pt-BR")} até{" "}
                     {pedido.dataFim.toLocaleDateString("pt-BR")} · R${" "}
                     {Number(pedido.valorBarbeiro).toFixed(2)}
                   </p>
-                  <p className="mt-1 text-sm">
+                  <p className="mt-1 font-mono text-xs tracking-wide text-brass uppercase">
                     {ROTULOS_STATUS_CONTRATACAO[pedido.status]}
                   </p>
                 </div>
@@ -51,17 +50,14 @@ export default async function PedidosPage() {
                     <AcoesContratacao contratacaoId={pedido.id} />
                   )}
                   {statusPermiteChat(pedido.status) && (
-                    <Link
-                      href={`/chat/${pedido.id}`}
-                      className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium"
-                    >
+                    <Link href={`/chat/${pedido.id}`} className="btn-secondary">
                       Chat
                     </Link>
                   )}
                 </div>
               </div>
               {pedido.avaliacao && (
-                <p className="text-sm text-neutral-600">
+                <p className="text-sm text-parchment-dim">
                   Avaliação recebida: ★ {pedido.avaliacao.nota}
                   {pedido.avaliacao.comentario
                     ? ` — "${pedido.avaliacao.comentario}"`

@@ -26,40 +26,42 @@ export default async function PerfilPage({
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-10 px-4 py-16">
       <div>
-        <h1 className="text-2xl font-semibold">Meu perfil profissional</h1>
-        <p className="mt-1 text-sm text-neutral-600">
+        <h1 className="page-title">Meu perfil profissional</h1>
+        <p className="mt-1 text-sm text-parchment-dim">
           Essas informações aparecem para as barbearias que buscam
           profissionais.
         </p>
       </div>
 
       {mp === "sucesso" && (
-        <p className="text-sm text-green-700">
+        <p className="text-sm text-emerald-400">
           Conta Mercado Pago conectada com sucesso.
         </p>
       )}
       {mp === "erro" && (
-        <p className="text-sm text-red-600">
+        <p className="text-sm text-red-400">
           Não foi possível conectar sua conta Mercado Pago. Tente novamente.
         </p>
       )}
 
       {perfil && (
-        <div className="rounded-md border border-neutral-200 p-4">
-          <h2 className="text-lg font-semibold">Recebimento de pagamentos</h2>
+        <div className="card p-4">
+          <h2 className="font-display text-lg font-semibold text-parchment">
+            Recebimento de pagamentos
+          </h2>
           {perfil.mpAccountId ? (
-            <p className="mt-1 text-sm text-green-700">
+            <p className="mt-1 text-sm text-emerald-400">
               Conta Mercado Pago conectada. Você já pode receber contratações.
             </p>
           ) : (
             <>
-              <p className="mt-1 text-sm text-neutral-600">
+              <p className="mt-1 text-sm text-parchment-dim">
                 Conecte sua conta Mercado Pago para poder receber contratações.
                 Sem isso, seu perfil não aparece disponível para as barbearias.
               </p>
               <Link
                 href="/api/mercadopago/conectar"
-                className="mt-3 inline-block rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+                className="btn-primary mt-3"
               >
                 Conectar Mercado Pago
               </Link>
@@ -84,11 +86,13 @@ export default async function PerfilPage({
       />
 
       <div>
-        <h2 className="text-lg font-semibold">Portfólio de fotos</h2>
+        <h2 className="font-display text-lg font-semibold text-parchment">
+          Portfólio de fotos
+        </h2>
         {perfil ? (
           <PortfolioUpload fotosIniciais={perfil.portfolioFotos} />
         ) : (
-          <p className="mt-2 text-sm text-neutral-600">
+          <p className="mt-2 text-sm text-parchment-dim">
             Salve as informações acima primeiro para poder enviar fotos do seu
             portfólio.
           </p>

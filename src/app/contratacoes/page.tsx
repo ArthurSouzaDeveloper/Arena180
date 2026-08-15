@@ -25,28 +25,27 @@ export default async function ContratacoesPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-16">
-      <h1 className="text-2xl font-semibold">Minhas contratações</h1>
+      <h1 className="page-title">Minhas contratações</h1>
 
       {contratacoes.length === 0 ? (
-        <p className="text-neutral-600">
+        <p className="text-parchment-dim">
           Você ainda não solicitou nenhuma contratação.
         </p>
       ) : (
         <div className="flex flex-col gap-3">
           {contratacoes.map((contratacao) => (
-            <div
-              key={contratacao.id}
-              className="flex flex-col gap-3 rounded-md border border-neutral-200 p-4"
-            >
+            <div key={contratacao.id} className="card flex flex-col gap-3 p-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="font-medium">{contratacao.barbeiro.nome}</p>
-                  <p className="text-sm text-neutral-600">
+                  <p className="font-display font-medium text-parchment">
+                    {contratacao.barbeiro.nome}
+                  </p>
+                  <p className="text-sm text-parchment-dim">
                     {contratacao.dataInicio.toLocaleDateString("pt-BR")} até{" "}
                     {contratacao.dataFim.toLocaleDateString("pt-BR")} · Total:
                     R$ {Number(contratacao.valorTotal).toFixed(2)}
                   </p>
-                  <p className="mt-1 text-sm">
+                  <p className="mt-1 font-mono text-xs tracking-wide text-brass uppercase">
                     {ROTULOS_STATUS_CONTRATACAO[contratacao.status]}
                   </p>
                 </div>
@@ -60,7 +59,7 @@ export default async function ContratacoesPage() {
                   {statusPermiteChat(contratacao.status) && (
                     <Link
                       href={`/chat/${contratacao.id}`}
-                      className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium"
+                      className="btn-secondary"
                     >
                       Chat
                     </Link>
@@ -72,7 +71,7 @@ export default async function ContratacoesPage() {
                 <AvaliarContratacaoForm contratacaoId={contratacao.id} />
               )}
               {contratacao.avaliacao && (
-                <p className="text-sm text-neutral-600">
+                <p className="text-sm text-parchment-dim">
                   Sua avaliação: ★ {contratacao.avaliacao.nota}
                   {contratacao.avaliacao.comentario
                     ? ` — "${contratacao.avaliacao.comentario}"`

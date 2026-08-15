@@ -62,8 +62,8 @@ export function PerfilBarbeiroForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <label className="flex flex-col gap-1 text-sm">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <label className="field-label flex flex-col gap-1">
         Anos de experiência
         <input
           name="anosExperiencia"
@@ -71,37 +71,37 @@ export function PerfilBarbeiroForm({
           min={0}
           required
           defaultValue={valoresIniciais?.anosExperiencia}
-          className="rounded-md border border-neutral-300 px-3 py-2"
+          className="field-input"
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="field-label flex flex-col gap-1">
         Especialidades (separadas por vírgula)
         <input
           name="especialidades"
           required
           placeholder="degradê, barba, corte infantil"
           defaultValue={valoresIniciais?.especialidades.join(", ")}
-          className="rounded-md border border-neutral-300 px-3 py-2"
+          className="field-input"
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="field-label flex flex-col gap-1">
         Cidade
         <input
           name="cidade"
           required
           defaultValue={valoresIniciais?.cidade}
-          className="rounded-md border border-neutral-300 px-3 py-2"
+          className="field-input"
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="field-label flex flex-col gap-1">
         Bairro (opcional)
         <input
           name="bairro"
           defaultValue={valoresIniciais?.bairro}
-          className="rounded-md border border-neutral-300 px-3 py-2"
+          className="field-input"
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="field-label flex flex-col gap-1">
         Raio de atendimento (km)
         <input
           name="raioAtendimentoKm"
@@ -109,10 +109,10 @@ export function PerfilBarbeiroForm({
           min={1}
           required
           defaultValue={valoresIniciais?.raioAtendimentoKm}
-          className="rounded-md border border-neutral-300 px-3 py-2"
+          className="field-input"
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="field-label flex flex-col gap-1">
         Valor padrão da diária (R$)
         <input
           name="valorDiariaPadrao"
@@ -121,17 +121,17 @@ export function PerfilBarbeiroForm({
           step="0.01"
           required
           defaultValue={valoresIniciais?.valorDiariaPadrao}
-          className="rounded-md border border-neutral-300 px-3 py-2"
+          className="field-input"
         />
       </label>
-      {erro && <p className="text-sm text-red-600">{erro}</p>}
+      {erro && <p className="text-sm text-red-400">{erro}</p>}
       {sucesso && (
-        <p className="text-sm text-green-700">Perfil salvo com sucesso.</p>
+        <p className="text-sm text-emerald-400">Perfil salvo com sucesso.</p>
       )}
       <button
         type="submit"
         disabled={enviando}
-        className="mt-2 w-fit rounded-md bg-neutral-900 px-4 py-2 font-medium text-white disabled:opacity-50"
+        className="btn-primary mt-2 w-fit"
       >
         {enviando ? "Salvando..." : "Salvar perfil"}
       </button>

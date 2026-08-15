@@ -29,45 +29,45 @@ export default async function BarbeirosPage({
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-16">
-      <h1 className="text-2xl font-semibold">Buscar barbeiros freelancer</h1>
+      <div>
+        <h1 className="page-title">Buscar barbeiros freelancer</h1>
+        <div className="pole-rule mt-3" />
+      </div>
 
       <form className="flex flex-wrap gap-3">
         <input
           name="cidade"
           placeholder="Cidade"
           defaultValue={cidade}
-          className="rounded-md border border-neutral-300 px-3 py-2"
+          className="field-input w-auto min-w-[10rem]"
         />
         <input
           name="especialidade"
           placeholder="Especialidade"
           defaultValue={especialidade}
-          className="rounded-md border border-neutral-300 px-3 py-2"
+          className="field-input w-auto min-w-[10rem]"
         />
         <input
           name="precoMin"
           type="number"
           placeholder="Preço mín."
           defaultValue={precoMin}
-          className="w-32 rounded-md border border-neutral-300 px-3 py-2"
+          className="field-input w-28"
         />
         <input
           name="precoMax"
           type="number"
           placeholder="Preço máx."
           defaultValue={precoMax}
-          className="w-32 rounded-md border border-neutral-300 px-3 py-2"
+          className="field-input w-28"
         />
-        <button
-          type="submit"
-          className="rounded-md bg-neutral-900 px-4 py-2 font-medium text-white"
-        >
+        <button type="submit" className="btn-primary">
           Buscar
         </button>
       </form>
 
       {barbeiros.length === 0 ? (
-        <p className="text-neutral-600">
+        <p className="text-parchment-dim">
           Nenhum barbeiro encontrado com esses filtros.
         </p>
       ) : (
@@ -76,9 +76,9 @@ export default async function BarbeirosPage({
             <Link
               key={barbeiro.id}
               href={`/barbeiros/${barbeiro.usuarioId}`}
-              className="flex flex-col gap-2 rounded-md border border-neutral-200 p-3 hover:border-neutral-400"
+              className="card group flex flex-col gap-2 overflow-hidden p-3 transition-colors hover:border-brass"
             >
-              <div className="relative aspect-square w-full overflow-hidden rounded-md bg-neutral-100">
+              <div className="relative aspect-square w-full overflow-hidden rounded-sm bg-ink-raised-2">
                 {barbeiro.portfolioFotos[0] && (
                   <Image
                     src={barbeiro.portfolioFotos[0].urlImagem}
@@ -87,23 +87,23 @@ export default async function BarbeirosPage({
                     className="object-cover"
                   />
                 )}
+                <div className="pole-stripe absolute inset-x-0 bottom-0 h-0.5 opacity-0 transition-opacity group-hover:opacity-100" />
               </div>
-              <span className="font-medium">{barbeiro.usuario.nome}</span>
-              <span className="text-sm text-neutral-600">
+              <span className="font-display font-medium text-parchment">
+                {barbeiro.usuario.nome}
+              </span>
+              <span className="text-sm text-parchment-dim">
                 {barbeiro.cidade} · {barbeiro.anosExperiencia} anos de
                 experiência
               </span>
               <span className="flex flex-wrap gap-1">
                 {barbeiro.especialidades.map((especialidade) => (
-                  <span
-                    key={especialidade}
-                    className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs"
-                  >
+                  <span key={especialidade} className="badge">
                     {especialidade}
                   </span>
                 ))}
               </span>
-              <span className="text-sm">
+              <span className="font-mono text-sm text-brass">
                 ★ {Number(barbeiro.notaMedia).toFixed(1)} (
                 {barbeiro.totalAvaliacoes} avaliações) · R${" "}
                 {Number(barbeiro.valorDiariaPadrao).toFixed(2)}/diária

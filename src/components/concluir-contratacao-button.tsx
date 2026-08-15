@@ -38,11 +38,11 @@ export function ConcluirContratacaoButton({
         type="button"
         onClick={handleConcluir}
         disabled={enviando}
-        className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+        className="btn-secondary py-1.5"
       >
         {enviando ? "Concluindo..." : "Marcar como concluída"}
       </button>
-      {erro && <p className="text-xs text-red-600">{erro}</p>}
+      {erro && <p className="text-xs text-red-400">{erro}</p>}
     </div>
   );
 }

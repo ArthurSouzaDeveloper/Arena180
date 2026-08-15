@@ -48,58 +48,42 @@ export function CadastroForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex w-full max-w-sm flex-col gap-3"
+      className="flex w-full max-w-sm flex-col gap-4"
     >
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="field-label flex flex-col gap-1">
         Nome
-        <input
-          name="nome"
-          required
-          className="rounded-md border border-neutral-300 px-3 py-2"
-        />
+        <input name="nome" required className="field-input" />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="field-label flex flex-col gap-1">
         E-mail
-        <input
-          name="email"
-          type="email"
-          required
-          className="rounded-md border border-neutral-300 px-3 py-2"
-        />
+        <input name="email" type="email" required className="field-input" />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="field-label flex flex-col gap-1">
         Telefone
-        <input
-          name="telefone"
-          className="rounded-md border border-neutral-300 px-3 py-2"
-        />
+        <input name="telefone" className="field-input" />
       </label>
       {camposExtras.map((campo) => (
-        <label key={campo.name} className="flex flex-col gap-1 text-sm">
+        <label key={campo.name} className="field-label flex flex-col gap-1">
           {campo.label}
           <input
             name={campo.name}
             required={campo.required}
-            className="rounded-md border border-neutral-300 px-3 py-2"
+            className="field-input"
           />
         </label>
       ))}
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="field-label flex flex-col gap-1">
         Senha
         <input
           name="senha"
           type="password"
           required
           minLength={8}
-          className="rounded-md border border-neutral-300 px-3 py-2"
+          className="field-input"
         />
       </label>
-      {erro && <p className="text-sm text-red-600">{erro}</p>}
-      <button
-        type="submit"
-        disabled={enviando}
-        className="mt-2 rounded-md bg-neutral-900 px-4 py-2 font-medium text-white disabled:opacity-50"
-      >
+      {erro && <p className="text-sm text-red-400">{erro}</p>}
+      <button type="submit" disabled={enviando} className="btn-primary mt-2">
         {enviando ? "Enviando..." : "Criar conta"}
       </button>
     </form>

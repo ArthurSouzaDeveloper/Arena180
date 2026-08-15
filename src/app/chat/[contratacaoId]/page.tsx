@@ -54,7 +54,7 @@ export default async function ChatContratacaoPage({
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-4 py-16">
-      <h1 className="text-2xl font-semibold">Conversa com {outraParte}</h1>
+      <h1 className="page-title">Conversa com {outraParte}</h1>
       <ChatConversa
         conversaId={conversa.id}
         usuarioId={session.user.id}

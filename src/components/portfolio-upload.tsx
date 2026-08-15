@@ -70,7 +70,7 @@ export function PortfolioUpload({ fotosIniciais }: { fotosIniciais: Foto[] }) {
             <button
               type="button"
               onClick={() => handleRemover(foto.id)}
-              className="absolute right-1 top-1 rounded bg-black/70 px-2 py-0.5 text-xs text-white opacity-0 group-hover:opacity-100"
+              className="absolute right-1 top-1 rounded-sm bg-ink/80 px-2 py-0.5 text-xs text-parchment opacity-0 group-hover:opacity-100"
             >
               Remover
             </button>
@@ -78,7 +78,7 @@ export function PortfolioUpload({ fotosIniciais }: { fotosIniciais: Foto[] }) {
         ))}
       </div>
       <label className="flex w-fit cursor-pointer flex-col gap-1 text-sm">
-        <span className="rounded-md border border-neutral-300 px-4 py-2 font-medium">
+        <span className="btn-secondary">
           {enviando ? "Enviando..." : "Adicionar foto"}
         </span>
         <input
@@ -90,7 +90,7 @@ export function PortfolioUpload({ fotosIniciais }: { fotosIniciais: Foto[] }) {
           className="hidden"
         />
       </label>
-      {erro && <p className="text-sm text-red-600">{erro}</p>}
+      {erro && <p className="text-sm text-red-400">{erro}</p>}
     </div>
   );
 }
