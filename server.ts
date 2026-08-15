@@ -95,6 +95,6 @@ app.prepare().then(() => {
   });
 
   httpServer.listen(port, () => {
-    console.log(`> Arena180 rodando em http://${hostname}:${port}`);
+    console.log(`> FreeBarber rodando em http://${hostname}:${port}`);
   });
 });
