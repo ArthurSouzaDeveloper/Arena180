@@ -61,6 +61,19 @@ export const mensagemSchema = z.object({
     .max(1000, "A mensagem pode ter no máximo 1000 caracteres."),
 });
 
+export const avaliacaoSchema = z.object({
+  nota: z.coerce
+    .number()
+    .int()
+    .min(1, "A nota deve ser de 1 a 5.")
+    .max(5, "A nota deve ser de 1 a 5."),
+  comentario: z
+    .string()
+    .trim()
+    .max(1000, "O comentário pode ter no máximo 1000 caracteres.")
+    .optional(),
+});
+
 export type CadastroBarbeariaInput = z.infer<typeof cadastroBarbeariaSchema>;
 export type CadastroBarbeiroInput = z.infer<typeof cadastroBarbeiroSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -69,3 +82,4 @@ export type SolicitarContratacaoInput = z.infer<
   typeof solicitarContratacaoSchema
 >;
 export type MensagemInput = z.infer<typeof mensagemSchema>;
+export type AvaliacaoInput = z.infer<typeof avaliacaoSchema>;

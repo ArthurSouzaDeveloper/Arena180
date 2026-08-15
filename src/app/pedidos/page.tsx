@@ -18,7 +18,7 @@ export default async function PedidosPage() {
   const pedidos = await prisma.contratacao.findMany({
     where: { barbeiroId: session.user.id },
     orderBy: { criadoEm: "desc" },
-    include: { barbearia: { select: { nome: true } } },
+    include: { barbearia: { select: { nome: true } }, avaliacao: true },
   });
 
   return (
@@ -32,29 +32,41 @@ export default async function PedidosPage() {
           {pedidos.map((pedido) => (
             <div
               key={pedido.id}
-              className="flex items-center justify-between rounded-md border border-neutral-200 p-4"
+              className="flex flex-col gap-3 rounded-md border border-neutral-200 p-4"
             >
-              <div>
-                <p className="font-medium">{pedido.barbearia.nome}</p>
-                <p className="text-sm text-neutral-600">
-                  {pedido.dataInicio.toLocaleDateString("pt-BR")} até{" "}
-                  {pedido.dataFim.toLocaleDateString("pt-BR")} · R${" "}
-                  {Number(pedido.valorBarbeiro).toFixed(2)}
-                </p>
-                <p className="mt-1 text-sm">
-                  {ROTULOS_STATUS_CONTRATACAO[pedido.status]}
-                </p>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-medium">{pedido.barbearia.nome}</p>
+                  <p className="text-sm text-neutral-600">
+                    {pedido.dataInicio.toLocaleDateString("pt-BR")} até{" "}
+                    {pedido.dataFim.toLocaleDateString("pt-BR")} · R${" "}
+                    {Number(pedido.valorBarbeiro).toFixed(2)}
+                  </p>
+                  <p className="mt-1 text-sm">
+                    {ROTULOS_STATUS_CONTRATACAO[pedido.status]}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  {pedido.status === "PENDENTE" && (
+                    <AcoesContratacao contratacaoId={pedido.id} />
+                  )}
+                  {statusPermiteChat(pedido.status) && (
+                    <Link
+                      href={`/chat/${pedido.id}`}
+                      className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium"
+                    >
+                      Chat
+                    </Link>
+                  )}
+                </div>
               </div>
-              {pedido.status === "PENDENTE" && (
-                <AcoesContratacao contratacaoId={pedido.id} />
-              )}
-              {statusPermiteChat(pedido.status) && (
-                <Link
-                  href={`/chat/${pedido.id}`}
-                  className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium"
-                >
-                  Chat
-                </Link>
+              {pedido.avaliacao && (
+                <p className="text-sm text-neutral-600">
+                  Avaliação recebida: ★ {pedido.avaliacao.nota}
+                  {pedido.avaliacao.comentario
+                    ? ` — "${pedido.avaliacao.comentario}"`
+                    : ""}
+                </p>
               )}
             </div>
           ))}

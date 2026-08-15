@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  avaliacaoSchema,
   cadastroBarbeariaSchema,
   cadastroBarbeiroSchema,
   loginSchema,
@@ -165,5 +166,28 @@ describe("solicitarContratacaoSchema", () => {
     });
 
     expect(resultado.success).toBe(false);
+  });
+});
+
+describe("avaliacaoSchema", () => {
+  it("aceita uma nota válida sem comentário", () => {
+    const resultado = avaliacaoSchema.safeParse({ nota: 5 });
+    expect(resultado.success).toBe(true);
+  });
+
+  it("aceita uma nota com comentário", () => {
+    const resultado = avaliacaoSchema.safeParse({
+      nota: 4,
+      comentario: "Ótimo atendimento.",
+    });
+    expect(resultado.success).toBe(true);
+  });
+
+  it("rejeita nota abaixo de 1", () => {
+    expect(avaliacaoSchema.safeParse({ nota: 0 }).success).toBe(false);
+  });
+
+  it("rejeita nota acima de 5", () => {
+    expect(avaliacaoSchema.safeParse({ nota: 6 }).success).toBe(false);
   });
 });

@@ -33,6 +33,22 @@ describe("transicaoValida", () => {
   it("não permite pular etapas (PENDENTE -> PAGA)", () => {
     expect(transicaoValida("PENDENTE", "PAGA")).toBe(false);
   });
+
+  it("permite PAGA -> CONCLUIDA", () => {
+    expect(transicaoValida("PAGA", "CONCLUIDA")).toBe(true);
+  });
+
+  it("permite CONCLUIDA -> AVALIADA", () => {
+    expect(transicaoValida("CONCLUIDA", "AVALIADA")).toBe(true);
+  });
+
+  it("não permite avaliar antes de concluir (PAGA -> AVALIADA)", () => {
+    expect(transicaoValida("PAGA", "AVALIADA")).toBe(false);
+  });
+
+  it("não permite avaliar mais de uma vez (AVALIADA -> AVALIADA)", () => {
+    expect(transicaoValida("AVALIADA", "AVALIADA")).toBe(false);
+  });
 });
 
 describe("calcularExpiracao", () => {
