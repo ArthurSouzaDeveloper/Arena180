@@ -77,7 +77,14 @@ jobs:
             EOF
 
             cd /opt/gestquadra
-            docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+            docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build --remove-orphans
+
+            if ! docker compose -f docker-compose.prod.yml --env-file .env.prod ps frontend --status running --quiet | grep -q .; then
+              echo "frontend failed to (re)start, likely a stale container still holding port 80 - forcing a clean recreate"
+              docker compose -f docker-compose.prod.yml --env-file .env.prod down --remove-orphans
+              docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build --remove-orphans
+            fi
+
             docker image prune -f
 
             echo "--- backend logs (diagnostic) ---"
