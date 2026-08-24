@@ -10,14 +10,25 @@ interface CreateArenaInput {
   adminPassword: string;
 }
 
+// Deliberately excludes mercadoPagoAccessToken / whatsappAccessToken: even
+// encrypted, a superadmin listing that spans every tenant has no reason to
+// ship that ciphertext to the client at all. The superadmin panel only ever
+// renders these fields (frontend/src/pages/SuperadminPage.tsx).
+const ARENA_SELECT = {
+  id: true,
+  name: true,
+  slug: true,
+  active: true,
+  createdAt: true,
+  users: { where: { role: "OWNER" as const }, select: { id: true, name: true, email: true } },
+  _count: { select: { courts: true, rachas: true } },
+};
+
 export const superadminService = {
   async listArenas() {
     return prisma.quadra.findMany({
       orderBy: { createdAt: "desc" },
-      include: {
-        users: { where: { role: "OWNER" }, select: { id: true, name: true, email: true } },
-        _count: { select: { courts: true, rachas: true } },
-      },
+      select: ARENA_SELECT,
     });
   },
 
@@ -32,7 +43,7 @@ export const superadminService = {
       throw new AppError("Já existe um usuário com esse e-mail");
     }
 
-    const hashedPassword = await bcrypt.hash(adminPassword, 10);
+    const hashedPassword = await bcrypt.hash(adminPassword, 12);
 
     return prisma.quadra.create({
       data: {
@@ -47,7 +58,7 @@ export const superadminService = {
           },
         },
       },
-      include: { users: { select: { id: true, name: true, email: true, role: true } } },
+      select: ARENA_SELECT,
     });
   },
 
@@ -56,6 +67,6 @@ export const superadminService = {
     if (!quadra) {
       throw new NotFoundError("Arena não encontrada");
     }
-    return prisma.quadra.update({ where: { id }, data: { active } });
+    return prisma.quadra.update({ where: { id }, data: { active }, select: ARENA_SELECT });
   },
 };

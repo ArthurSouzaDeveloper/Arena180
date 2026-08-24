@@ -3,6 +3,7 @@ import { z } from "zod";
 import { bookingService } from "../../application/services/bookingService";
 import { subscriptionService } from "../../application/services/subscriptionService";
 import { asyncHandler } from "../middlewares/errorHandler";
+import { bookingCreateRateLimit } from "../middlewares/rateLimit";
 
 const router = Router();
 
@@ -36,6 +37,7 @@ router.get(
 
 router.post(
   "/:quadraSlug/courts/:courtId",
+  bookingCreateRateLimit,
   asyncHandler(async (req, res) => {
     const data = createSchema.parse(req.body);
     const booking = await bookingService.create(req.params.quadraSlug, req.params.courtId, data);
@@ -126,6 +128,7 @@ router.get(
 
 router.post(
   "/:quadraSlug/courts/:courtId/mensalista",
+  bookingCreateRateLimit,
   asyncHandler(async (req, res) => {
     const data = createSubscriptionSchema.parse(req.body);
     const subscription = await subscriptionService.create(req.params.quadraSlug, req.params.courtId, data);

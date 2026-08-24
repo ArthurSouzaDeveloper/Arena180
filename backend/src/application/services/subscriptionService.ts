@@ -433,6 +433,18 @@ export const subscriptionService = {
     }
     return prisma.subscription.findMany({
       where: { courtId, status: { in: ["ATIVA", "AGUARDANDO_PAGAMENTO"] } },
+      // Admin cancels by subscription id (adminCancel below), never needs the
+      // customer-facing cancelToken — trimmed to what the dashboard renders.
+      select: {
+        id: true,
+        courtId: true,
+        customerName: true,
+        customerPhone: true,
+        weekday: true,
+        startTime: true,
+        endTime: true,
+        status: true,
+      },
       orderBy: { createdAt: "desc" },
     });
   },

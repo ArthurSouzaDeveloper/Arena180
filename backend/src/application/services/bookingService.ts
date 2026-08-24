@@ -22,6 +22,22 @@ interface CreateBookingInput {
 
 const ACTIVE_BOOKING_STATUSES: BookingStatus[] = ["CONFIRMADA", "PENDENTE_PAGAMENTO"];
 
+// Admin listings never need cancelToken (a customer-facing capability token)
+// or the raw pixPaymentId — trims the response to what the dashboard renders.
+const BOOKING_ADMIN_SELECT = {
+  id: true,
+  courtId: true,
+  date: true,
+  startTime: true,
+  endTime: true,
+  customerName: true,
+  customerPhone: true,
+  totalPrice: true,
+  status: true,
+  depositAmount: true,
+  paymentMode: true,
+} satisfies Prisma.BookingSelect;
+
 async function findQuadraBySlug(slug: string) {
   const quadra = await prisma.quadra.findUnique({ where: { slug } });
   if (!quadra || !quadra.active) {
@@ -449,6 +465,7 @@ export const bookingService = {
         status: { in: ACTIVE_BOOKING_STATUSES },
         date: { gte: new Date(new Date().toISOString().slice(0, 10)) },
       },
+      select: BOOKING_ADMIN_SELECT,
       orderBy: [{ date: "asc" }, { startTime: "asc" }],
     });
   },
@@ -480,7 +497,7 @@ export const bookingService = {
             }
           : {}),
       },
-      include: { court: { select: { name: true } } },
+      select: { ...BOOKING_ADMIN_SELECT, court: { select: { name: true } } },
       orderBy: [{ date: "desc" }, { startTime: "desc" }],
     });
   },

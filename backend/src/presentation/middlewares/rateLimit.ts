@@ -23,3 +23,16 @@ export const apiRateLimit = rateLimit({
   legacyHeaders: false,
   message: { message: "Muitas requisições. Tente novamente em alguns minutos." },
 });
+
+// Booking/subscription creation is unauthenticated and each call opens a
+// 20-minute hold on a court slot. Without a tighter cap here, a script could
+// spam PENDENTE_PAGAMENTO holds fast enough to keep every slot perpetually
+// "taken" for real customers — the general API limit (600/15min) is far too
+// loose to stop that specific abuse.
+export const bookingCreateRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Muitas tentativas de reserva. Tente novamente em alguns minutos." },
+});

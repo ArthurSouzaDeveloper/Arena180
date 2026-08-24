@@ -36,7 +36,7 @@ async function main() {
     process.exit(1);
   }
 
-  const hashedPassword = await bcrypt.hash(adminPassword, 10);
+  const hashedPassword = await bcrypt.hash(adminPassword, 12);
 
   const quadra = await prisma.quadra.create({
     data: {
