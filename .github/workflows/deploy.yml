@@ -77,13 +77,15 @@ jobs:
             EOF
 
             cd /opt/gestquadra
-            docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build --remove-orphans
 
-            if ! docker compose -f docker-compose.prod.yml --env-file .env.prod ps frontend --status running --quiet | grep -q .; then
-              echo "frontend failed to (re)start, likely a stale container still holding port 80 - forcing a clean recreate"
-              docker compose -f docker-compose.prod.yml --env-file .env.prod down --remove-orphans
-              docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build --remove-orphans
-            fi
+            # A previous frontend container can be left holding host port 80/443
+            # (crashed but not removed, or a restart-policy race) even when this
+            # same compose project already owns it - "up -d" alone then fails
+            # with "port is already allocated" and, under `set -e`, aborts the
+            # whole deploy. Tear the stack down first (idempotent - a no-op if
+            # already stopped) so the port is always free before recreating it.
+            docker compose -f docker-compose.prod.yml --env-file .env.prod down --remove-orphans || true
+            docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build --remove-orphans
 
             docker image prune -f
 
