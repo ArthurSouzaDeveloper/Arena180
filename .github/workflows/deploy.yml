@@ -78,12 +78,19 @@ jobs:
 
             cd /opt/gestquadra
 
-            # A previous frontend container can be left holding host port 80/443
-            # (crashed but not removed, or a restart-policy race) even when this
-            # same compose project already owns it - "up -d" alone then fails
-            # with "port is already allocated" and, under `set -e`, aborts the
-            # whole deploy. Tear the stack down first (idempotent - a no-op if
-            # already stopped) so the port is always free before recreating it.
+            echo "--- diagnosing port 80/443 usage before deploy ---"
+            (ss -ltnp 2>/dev/null || netstat -ltnp 2>/dev/null) | grep -E ':(80|443)\b' || echo "(nothing found listening on 80/443)"
+
+            # A crashed/killed container can leave an orphaned docker-proxy
+            # process still bound to its published host port - `docker compose
+            # down` won't touch it since it isn't tracked as part of any
+            # container, so "up -d" then fails forever with "port is already
+            # allocated" no matter how cleanly the compose project itself is
+            # torn down. Kill any docker-proxy still holding 80/443 directly.
+            pkill -9 -f "docker-proxy.*-host-port 80\b" || true
+            pkill -9 -f "docker-proxy.*-host-port 443\b" || true
+            sleep 1
+
             docker compose -f docker-compose.prod.yml --env-file .env.prod down --remove-orphans || true
             docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build --remove-orphans
 
