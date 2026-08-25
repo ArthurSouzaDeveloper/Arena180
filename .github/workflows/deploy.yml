@@ -125,6 +125,16 @@ jobs:
             echo "--- backend logs (diagnostic) ---"
             sleep 5
             docker compose -f docker-compose.prod.yml logs backend --tail 80 || true
+
+            echo "--- frontend/nginx logs (diagnostic) ---"
+            docker compose -f docker-compose.prod.yml logs frontend --tail 80 || true
+
+            echo "--- container status (diagnostic) ---"
+            docker compose -f docker-compose.prod.yml ps || true
+
+            echo "--- local HTTP/HTTPS reachability (diagnostic) ---"
+            curl -sko /dev/null -w "https://localhost -> %{http_code}\n" https://localhost || echo "curl to https://localhost failed"
+            curl -so /dev/null -w "http://localhost -> %{http_code}\n" http://localhost || echo "curl to http://localhost failed"
         env:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
