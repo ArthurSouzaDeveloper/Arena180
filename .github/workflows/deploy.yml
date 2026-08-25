@@ -123,23 +123,7 @@ jobs:
             done
 
             if [ "$up_ok" != "true" ]; then
-              # All 6 recreate attempts failed identically with nothing
-              # actually listening on the port beforehand (per the diagnostic
-              # above) - that means it isn't a live process or a container
-              # left half-configured, it's the Docker daemon's own internal
-              # iptables/NAT bookkeeping for port publishing out of sync with
-              # reality after many rapid container recreations. Only a daemon
-              # restart clears that; retry once more after it.
-              echo "up -d kept failing after 6 attempts with no process found holding the port - restarting the Docker daemon to clear stale internal networking state, then retrying"
-              systemctl restart docker
-              sleep 5
-              if docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --force-recreate --remove-orphans; then
-                up_ok=true
-              fi
-            fi
-
-            if [ "$up_ok" != "true" ]; then
-              echo "up -d still failing even after a Docker daemon restart - giving up"
+              echo "up -d kept failing after 6 attempts - giving up (needs manual investigation on the VPS itself, not a further automated retry)"
               exit 1
             fi
 
