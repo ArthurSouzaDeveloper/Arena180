@@ -106,9 +106,15 @@ jobs:
             # can still hit "port is already allocated" as a pure timing race,
             # with no process left to kill by the time it happens. Retry the
             # (already-built, so cheap) up instead of failing the whole deploy.
+            # --force-recreate matters here: a failed attempt can leave the
+            # frontend container half-created with its port publish never
+            # actually applied - retrying a plain "up -d" then just starts
+            # that same broken container instead of setting up its network
+            # fresh, so nginx runs but nothing is listening on the host's
+            # 80/443 at all.
             up_ok=false
             for attempt in 1 2 3 4 5 6; do
-              if docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --remove-orphans; then
+              if docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --force-recreate --remove-orphans; then
                 up_ok=true
                 break
               fi
