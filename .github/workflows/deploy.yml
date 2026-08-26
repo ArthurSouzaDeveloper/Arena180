@@ -36,6 +36,12 @@ on:
       setup_https:
         description: "Configurar certificado HTTPS via Let's Encrypt para o domínio (true para executar)"
         required: false
+      reset_password_email:
+        description: "E-mail do usuário para resetar a senha (deixe em branco para pular)"
+        required: false
+      reset_password_new_password:
+        description: "Nova senha para o usuário acima"
+        required: false
 
 jobs:
   deploy:
@@ -268,3 +274,31 @@ jobs:
                 await prisma.\$disconnect();
               })();
             "
+
+      - name: Reset user password (manual dispatch only)
+        if: ${{ inputs.reset_password_email != '' }}
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          envs: RESET_EMAIL,RESET_PASSWORD
+          script: |
+            set -e
+            cd /opt/gestquadra
+            docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T -e RESET_EMAIL -e RESET_PASSWORD backend node -e "
+              const bcrypt = require('bcryptjs');
+              const { PrismaClient } = require('@prisma/client');
+              const prisma = new PrismaClient();
+              (async () => {
+                const email = process.env.RESET_EMAIL;
+                const password = process.env.RESET_PASSWORD;
+                const hashedPassword = await bcrypt.hash(password, 12);
+                const user = await prisma.user.update({ where: { email }, data: { password: hashedPassword } });
+                console.log('Senha atualizada para:', user.email);
+                await prisma.\$disconnect();
+              })();
+            "
+        env:
+          RESET_EMAIL: ${{ inputs.reset_password_email }}
+          RESET_PASSWORD: ${{ inputs.reset_password_new_password }}
