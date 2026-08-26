@@ -24,6 +24,16 @@ export const apiRateLimit = rateLimit({
   message: { message: "Muitas requisições. Tente novamente em alguns minutos." },
 });
 
+// Requesting a WhatsApp code costs money per message and is an easy abuse
+// target (spamming a stranger's phone) - keep it far tighter than login.
+export const forgotPasswordRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Muitas tentativas. Tente novamente em alguns minutos." },
+});
+
 // Booking/subscription creation is unauthenticated and each call opens a
 // 20-minute hold on a court slot. Without a tighter cap here, a script could
 // spam PENDENTE_PAGAMENTO holds fast enough to keep every slot perpetually

@@ -411,6 +411,61 @@ function WhatsappSettingsCard() {
   );
 }
 
+function RecoveryPhoneCard() {
+  const [phone, setPhone] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.get("/auth/me").then((res) => setPhone(res.data.phone ?? ""));
+  }, []);
+
+  async function handleSave() {
+    setSaving(true);
+    setError(null);
+    setSaved(false);
+    try {
+      await api.patch("/auth/phone", { phone });
+      setSaved(true);
+    } catch (err: any) {
+      setError(err.response?.data?.message ?? "Não foi possível salvar o telefone.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="mb-6 rounded-lg border bg-white p-4 shadow-sm">
+      <p className="mb-1 text-sm font-medium text-gray-700">Telefone para recuperação de senha</p>
+      <p className="mb-3 text-xs text-gray-500">
+        Cadastre seu próprio número de WhatsApp para poder receber um código e redefinir sua senha caso a esqueça.
+        Só funciona depois que o WhatsApp da arena estiver configurado acima.
+      </p>
+
+      {error && <p className="mb-3 rounded bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+      {saved && <p className="mb-3 rounded bg-green-50 px-3 py-2 text-sm text-green-700">Telefone salvo.</p>}
+
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="text"
+          placeholder="+55 19 99999-9999"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          className="min-w-0 flex-1 rounded border border-gray-300 px-3 py-2 text-sm"
+        />
+        <button
+          onClick={handleSave}
+          disabled={saving || !phone}
+          className="shrink-0 rounded bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
+        >
+          Salvar
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function DashboardPage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
 
@@ -425,6 +480,7 @@ export function DashboardPage() {
       <BookingLinkCard />
       <PixSettingsCard />
       <WhatsappSettingsCard />
+      <RecoveryPhoneCard />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Hoje" value={currencyFormatter.format(summary?.revenueToday ?? 0)} />

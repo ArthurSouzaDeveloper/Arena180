@@ -3,6 +3,7 @@ import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { SuperadminRoute } from "./components/SuperadminRoute";
 import { LoginPage } from "./pages/LoginPage";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ProductsPage } from "./pages/ProductsPage";
 import { NewRachaPage } from "./pages/NewRachaPage";
@@ -19,6 +20,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/esqueci-minha-senha" element={<ForgotPasswordPage />} />
       <Route path="/agendar/:slug" element={<PublicBookingPage />} />
       <Route path="/agendar/:slug/cancelar/:bookingId" element={<CancelBookingPage />} />
       <Route path="/agendar/:slug/minhas-reservas" element={<MyBookingsPage />} />

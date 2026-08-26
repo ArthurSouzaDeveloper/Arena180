@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export function LoginPage() {
@@ -59,6 +59,10 @@ export function LoginPage() {
         >
           {submitting ? "Entrando..." : "Entrar"}
         </button>
+
+        <Link to="/esqueci-minha-senha" className="mt-4 block text-center text-sm text-primary-700 hover:underline">
+          Esqueci minha senha
+        </Link>
       </form>
     </div>
   );

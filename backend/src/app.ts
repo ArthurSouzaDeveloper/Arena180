@@ -4,7 +4,7 @@ import helmet from "helmet";
 import path from "path";
 import { env } from "./config/env";
 import { errorHandler } from "./presentation/middlewares/errorHandler";
-import { apiRateLimit, loginRateLimit } from "./presentation/middlewares/rateLimit";
+import { apiRateLimit, loginRateLimit, forgotPasswordRateLimit } from "./presentation/middlewares/rateLimit";
 import { requestLogger } from "./presentation/middlewares/requestLogger";
 import authRoutes from "./presentation/routes/authRoutes";
 import productRoutes from "./presentation/routes/productRoutes";
@@ -33,6 +33,7 @@ export function createApp() {
 
   app.use(apiRateLimit);
   app.use("/api/auth/login", loginRateLimit);
+  app.use("/api/auth/forgot-password", forgotPasswordRateLimit);
 
   app.use("/api/auth", authRoutes);
   app.use("/api/products", productRoutes);

@@ -63,6 +63,7 @@ export const authService = {
       id: user.id,
       name: user.name,
       email: user.email,
+      phone: user.phone,
       role: user.role,
       quadra: user.quadra
         ? {
@@ -72,5 +73,10 @@ export const authService = {
           }
         : null,
     };
+  },
+
+  async updatePhone(userId: string, phone: string) {
+    const user = await prisma.user.update({ where: { id: userId }, data: { phone } });
+    return { phone: user.phone };
   },
 };
