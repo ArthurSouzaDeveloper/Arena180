@@ -299,6 +299,12 @@ jobs:
                 await prisma.\$disconnect();
               })();
             "
+
+            echo "--- testando login com as credenciais recém-definidas ---"
+            curl -sk -X POST https://localhost/api/auth/login \
+              -H "Content-Type: application/json" \
+              -d "{\"email\":\"$RESET_EMAIL\",\"password\":\"$RESET_PASSWORD\"}" \
+              -w "\nHTTP status: %{http_code}\n"
         env:
           RESET_EMAIL: ${{ inputs.reset_password_email }}
           RESET_PASSWORD: ${{ inputs.reset_password_new_password }}
