@@ -63,7 +63,16 @@ jobs:
           target: "/opt/gestquadra"
           strip_components: 0
 
+      # Only push events need a real redeploy - a workflow_dispatch run is
+      # normally used to run one of the manual-dispatch-only diagnostic/seed
+      # steps below against whatever is already running, not to ship new
+      # code. Running this unconditionally on every dispatch (as it used to)
+      # tore down and recreated the backend container on every single manual
+      # run, which silently wiped out its container logs right before the
+      # "Tail backend logs" step below could read them - the exact thing
+      # that made an earlier diagnostic attempt come up empty.
       - name: Install Docker, write env file and deploy
+        if: ${{ github.event_name == 'push' }}
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
