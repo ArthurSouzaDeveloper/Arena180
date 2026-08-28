@@ -42,6 +42,9 @@ on:
       reset_password_new_password:
         description: "Nova senha para o usuário acima"
         required: false
+      tail_backend_logs:
+        description: "Mostrar as últimas linhas do log do backend (true para executar)"
+        required: false
 
 jobs:
   deploy:
@@ -308,3 +311,15 @@ jobs:
         env:
           RESET_EMAIL: ${{ inputs.reset_password_email }}
           RESET_PASSWORD: ${{ inputs.reset_password_new_password }}
+
+      - name: Tail backend logs (manual dispatch only)
+        if: ${{ inputs.tail_backend_logs == 'true' }}
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            set -e
+            cd /opt/gestquadra
+            docker compose -f docker-compose.prod.yml --env-file .env.prod logs backend --tail 300
